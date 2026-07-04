@@ -1,0 +1,6 @@
+{
+  "name": "Hero",
+  "healthPoints": 30,
+  "baseDamage": 3,
+  "baseArmor": 0
+}

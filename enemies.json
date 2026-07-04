@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Goblin",
+    "behaviour": "active aggressive",
+    "healthPoints": 20,
+    "baseDamage": 5,
+    "baseArmor": 0
+  },
+  {
+    "name": "Slime",
+    "behaviour": "passive aggressive",
+    "healthPoints": 15,
+    "baseDamage": 4,
+    "baseArmor": 1
+  },
+  {
+    "name": "Bandit",
+    "behaviour": "neutral",
+    "healthPoints": 18,
+    "baseDamage": 6,
+    "baseArmor": 1
+  },
+  {
+    "name": "Troll",
+    "behaviour": "wandering aggressive",
+    "healthPoints": 35,
+    "baseDamage": 10,
+    "baseArmor": 5
+  },
+  {
+    "name": "Wolf",
+    "behaviour": "wandering aggressive",
+    "healthPoints": 16,
+    "baseDamage": 7,
+    "baseArmor": 0
+  },
+  {
+    "name": "Rat",
+    "behaviour": "neutral",
+    "healthPoints": 10,
+    "baseDamage": 2,
+    "baseArmor": 0
+  }
+]

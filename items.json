@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Sword",
+    "slot": "main hand",
+    "price": 20,
+    "properties": { "damage": 12, "armor": 0 }
+  },
+  {
+    "name": "Shield",
+    "slot": "off-hand",
+    "price": 15,
+    "properties": { "damage": 0, "armor": 3 }
+  },
+  {
+    "name": "Longbow",
+    "slot": "main hand/off-hand",
+    "price": 25,
+    "properties": { "damage": 10, "armor": 0 }
+  },
+  {
+    "name": "Helmet",
+    "slot": "head",
+    "price": 10,
+    "properties": { "damage": 0, "armor": 2 }
+  },
+  {
+    "name": "Belt",
+    "slot": "torso",
+    "price": 8,
+    "properties": { "damage": 0, "armor": 2 }
+  },
+  {
+    "name": "Plate Armor",
+    "slot": "torso",
+    "price": 150,
+    "properties": { "damage": 0, "armor": 8 }
+  },
+  {
+    "name": "Cloak",
+    "slot": "torso",
+    "price": 12,
+    "properties": { "damage": 0, "armor": 1 }
+  },
+  {
+    "name": "Longsword",
+    "slot": "main hand/off-hand",
+    "price": 35,
+    "properties": { "damage": 18, "armor": 0 }
+  },
+  {
+    "name": "Spear",
+    "slot": "main hand/off-hand",
+    "price": 30,
+    "properties": { "damage": 14, "armor": 0 }
+  },
+  {
+    "name": "Club",
+    "slot": "main hand",
+    "price": 8,
+    "properties": { "damage": 4, "armor": 0 }
+  },
+  {
+    "name": "Dagger",
+    "slot": "main hand",
+    "price": 12,
+    "properties": { "damage": 6, "armor": 0 }
+  },
+  {
+    "name": "Rusty Sword",
+    "slot": "main hand",
+    "price": 16,
+    "properties": { "damage": 8, "armor": 0 }
+  },
+  {
+    "name": "Brigandine",
+    "slot": "torso",
+    "price": 45,
+    "properties": { "damage": 0, "armor": 5 }
+  },
+  {
+    "name": "Mail",
+    "slot": "torso",
+    "price": 60,
+    "properties": { "damage": 0, "armor": 6 }
+  },
+  {
+    "name": "Horse",
+    "slot": "none",
+    "price": 300,
+    "properties": { "damage": 0, "armor": 0 }
+  }
+]
