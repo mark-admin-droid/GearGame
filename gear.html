@@ -2,31 +2,39 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Gear Shop</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
             color: #111;
             background: linear-gradient(180deg, #f2efe7 0%, #ece7da 100%);
         }
 
         .screenCard {
-            margin: 36px auto;
-            padding: 24px;
+            margin: 0;
+            padding: 12px;
             border: 1px solid #b8ad97;
-            border-radius: 12px;
+            border-radius: 0;
             text-align: center;
             background: #f9f6ee;
             box-shadow: 0 8px 24px rgba(70, 54, 30, 0.12);
+            width: 100%;
+            max-width: none;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
 
-        .startScreen {
-            max-width: 700px;
+        .startScreen,
+        .mainScreen,
+        .battleScreen,
+        .deathScreen {
+            max-width: none;
         }
 
-        .mainScreen {
-            max-width: 900px;
+        #mainView {
+            text-align: left;
         }
 
         .mainHeader {
@@ -39,12 +47,10 @@
 
         .battleScreen {
             display: none;
-            max-width: 720px;
         }
 
         .deathScreen {
             display: none;
-            max-width: 700px;
         }
 
         .deathSummary {
@@ -88,7 +94,9 @@
         .box {
             border: 1px solid #ccc;
             padding: 10px;
-            width: 360px;
+            width: 100%;
+            flex: 1 1 0;
+            min-width: 0;
             color: #111;
             box-sizing: border-box;
         }
@@ -298,6 +306,74 @@
             max-height: 140px;
             overflow-y: auto;
         }
+
+        .adventureLayout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .adventureMain {
+            min-width: 0;
+        }
+
+        .adventureLog,
+        .deathLog {
+            margin-top: 0;
+            max-height: 55vh;
+        }
+
+        .deathLayout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+            text-align: left;
+        }
+
+        .deathMain {
+            min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .box {
+                flex: 1 1 auto;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .screenCard {
+                padding: 16px;
+            }
+
+            .adventureLayout,
+            .deathLayout {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+
+            .adventureMain,
+            .deathMain {
+                flex: 1;
+            }
+
+            .adventureLog,
+            .deathLog {
+                width: 320px;
+                flex: 0 0 320px;
+                border-top: 0;
+                border-left: 1px solid #ddd;
+                padding-top: 0;
+                padding-left: 10px;
+                max-height: 70vh;
+            }
+        }
     </style>
 </head>
 <body>
@@ -349,16 +425,26 @@
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
         <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
         <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
-        <div id="battleGrid" class="battleGrid"></div>
-        <div id="eventLog" class="eventLog"></div>
+        <div class="adventureLayout">
+            <div class="adventureMain">
+                <div id="battleGrid" class="battleGrid"></div>
+            </div>
+            <div id="eventLog" class="eventLog adventureLog"></div>
+        </div>
     </div>
 
     <div id="deathScreen" class="deathScreen screenCard">
         <h2>The End</h2>
-        <div id="deathSummary" class="deathSummary"></div>
-        <h3>Battle Log</h3>
-        <div id="deathLog" class="eventLog"></div>
-        <button id="deathRestartButton" class="startButton gameButton" onclick="restartAfterDeath()">Start a New Game</button>
+        <div class="deathLayout">
+            <div class="deathMain">
+                <div id="deathSummary" class="deathSummary"></div>
+                <button id="deathRestartButton" class="startButton gameButton" onclick="restartAfterDeath()">Start a New Game</button>
+            </div>
+            <div>
+                <h3>Battle Log</h3>
+                <div id="deathLog" class="eventLog deathLog"></div>
+            </div>
+        </div>
     </div>
 
     <script>
