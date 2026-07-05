@@ -203,7 +203,7 @@
 
         .battleGrid {
             display: grid;
-            grid-template-columns: repeat(15, 28px);
+            grid-template-columns: repeat(20, 28px);
             gap: 2px;
             justify-content: center;
             margin-top: 10px;
@@ -251,10 +251,137 @@
             font-weight: bold;
         }
 
-        .battleCell.log {
-            background-color: #6d4c41;
+        .battleCell.woodBlock {
+            background-color: #8b5a2b;
             color: #fff3e0;
             font-weight: bold;
+        }
+
+        .battleCell.stoneBlock {
+            background-color: #d0d0d0;
+            color: #222;
+            font-weight: bold;
+        }
+
+        .battleCell.cave {
+            background-color: #7d7d7d;
+            color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .battleCell.caveCenter {
+            background-color: #111;
+            color: #ddd;
+            font-weight: bold;
+        }
+
+        .caveGrid {
+            display: none;
+            grid-template-columns: repeat(8, 36px);
+            gap: 2px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .caveCell {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #3d3d3d;
+            background: #4a4a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ddd;
+        }
+
+        .caveCell.hero {
+            background: #c8f7c5;
+            color: #111;
+            font-weight: bold;
+        }
+
+        .caveCell.rock {
+            background: #111;
+            color: #111;
+        }
+
+        .mapWithLeftLogs {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .leftLogsPanel {
+            width: 64px;
+            min-height: 598px;
+            border: 1px solid #b8ad97;
+            background: #efe5d2;
+            padding: 4px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
+        }
+
+        .leftLogItem {
+            height: 24px;
+            border-radius: 2px;
+            background-color: #6d4c41;
+            color: #fff3e0;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .leftRockItem {
+            height: 24px;
+            border-radius: 2px;
+            background-color: #2f2f2f;
+            color: #e2e2e2;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .resourceSectionTitle {
+            font-size: 11px;
+            color: #4f4435;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+
+        .leftLogsEmpty {
+            font-size: 11px;
+            color: #6f675e;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        .caveViewLayout {
+            display: none;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .caveResourcePanel {
+            width: 72px;
+            min-height: 304px;
+            border: 1px solid #555;
+            background: #d3d3d3;
+            padding: 4px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            overflow-y: auto;
         }
 
         .moveButton {
@@ -297,6 +424,25 @@
 
         #chopTreeButton {
             background: #1b5e20;
+        }
+
+        #buildButton {
+            background: #0f9ea8;
+        }
+
+        #caveButton {
+            background: #111;
+            color: #fff;
+        }
+
+        #mineButton {
+            background: #c9c9c9;
+            color: #111;
+        }
+
+        #stoneBuildButton {
+            background: #d4d4d4;
+            color: #111;
         }
 
         .fleeButton {
@@ -441,10 +587,21 @@
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
         <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
         <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
+        <button id="buildButton" class="inventoryButton" onclick="buildFromLogs()" style="display:none;" disabled>Build</button>
+        <button id="stoneBuildButton" class="inventoryButton" onclick="buildFromRocks()" style="display:none;" disabled>Stone Build</button>
+        <button id="caveButton" class="inventoryButton" onclick="toggleCave()" style="display:none;">Enter Cave</button>
+        <button id="mineButton" class="inventoryButton" onclick="mineRock()" style="display:none;">Mine</button>
         <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
         <div class="adventureLayout">
             <div class="adventureMain">
-                <div id="battleGrid" class="battleGrid"></div>
+                <div class="mapWithLeftLogs">
+                    <div id="leftLogsPanel" class="leftLogsPanel"></div>
+                    <div id="battleGrid" class="battleGrid"></div>
+                </div>
+                <div id="caveViewLayout" class="caveViewLayout">
+                    <div id="caveGrid" class="caveGrid"></div>
+                    <div id="caveResourcePanel" class="caveResourcePanel"></div>
+                </div>
             </div>
             <div id="eventLog" class="eventLog adventureLog"></div>
         </div>
@@ -468,6 +625,10 @@
         var shopItems = [];
         var inventory = [];
         var gold = 50;
+        var mapSize = 20;
+        var caveSize = 8;
+        var initialTreeCount = 15;
+        var dailyTreeGrowth = 3;
         var hasHorse = false;
         var horseCount = 0;
         var equippedItems = {
@@ -489,6 +650,13 @@
         var treasureCells = [];
         var treeCells = [];
         var logCells = [];
+        var woodBlockCells = [];
+        var stoneBlockCells = [];
+        var caveCells = [];
+        var inCave = false;
+        var caveHeroPos = { x: 4, y: 7 };
+        var caveRockCells = [];
+        var minedRockItems = [];
         var battleActive = false;
         var gameOver = false;
         var enemyTemplates = [];
@@ -593,6 +761,13 @@
             treasureCells = [];
             treeCells = [];
             logCells = [];
+            woodBlockCells = [];
+            stoneBlockCells = [];
+            caveCells = [];
+            inCave = false;
+            caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
+            caveRockCells = [];
+            minedRockItems = [];
             enemies = [];
             currentEnemy = null;
             enemyCurrentHealth = 0;
@@ -821,9 +996,46 @@
 
         function getRandomCell() {
             return {
-                x: Math.floor(Math.random() * 15),
-                y: Math.floor(Math.random() * 15)
+                x: Math.floor(Math.random() * mapSize),
+                y: Math.floor(Math.random() * mapSize)
             };
+        }
+
+        function addRandomTrees(count, blockedCells) {
+            var blocked = blockedCells || [];
+
+            for (var treeIndex = 0; treeIndex < count; treeIndex++) {
+                var treePos = getRandomCell();
+                var treeBlocked = false;
+
+                while (!treeBlocked) {
+                    treeBlocked = true;
+                    for (var c = 0; c < blocked.length; c++) {
+                        if (blocked[c].x === treePos.x && blocked[c].y === treePos.y) {
+                            treePos = getRandomCell();
+                            treeBlocked = false;
+                            break;
+                        }
+                    }
+                }
+
+                treeCells.push(treePos);
+                blocked.push(treePos);
+            }
+        }
+
+        function getDailyCaveCells() {
+            return [
+                { x: 0, y: mapSize - 3 },
+                { x: 1, y: mapSize - 3 },
+                { x: 2, y: mapSize - 3 },
+                { x: 0, y: mapSize - 2 },
+                { x: 1, y: mapSize - 2, isCenter: true },
+                { x: 2, y: mapSize - 2 },
+                { x: 0, y: mapSize - 1 },
+                { x: 1, y: mapSize - 1 },
+                { x: 2, y: mapSize - 1 }
+            ];
         }
 
         function getEnemyDisplayLetter(enemy) {
@@ -854,24 +1066,25 @@
                 source.splice(randomIndex, 1);
             }
 
-            var requiredItem = null;
+            var requiredItems = [];
             for (var j = 0; j < items.length; j++) {
-                if (items[j] && items[j].name === 'Axe') {
-                    requiredItem = items[j];
-                    break;
+                if (items[j] && (items[j].name === 'Axe' || items[j].name === 'Pickaxe')) {
+                    requiredItems.push(items[j]);
                 }
             }
 
-            if (requiredItem && result.length > 0) {
-                var hasAxe = false;
+            for (var requiredIndex = 0; requiredIndex < requiredItems.length && result.length > 0; requiredIndex++) {
+                var requiredItem = requiredItems[requiredIndex];
+                var hasRequiredItem = false;
                 for (var k = 0; k < result.length; k++) {
-                    if (result[k] && result[k].name === 'Axe') {
-                        hasAxe = true;
+                    if (result[k] && result[k].name === requiredItem.name) {
+                        hasRequiredItem = true;
                         break;
                     }
                 }
-                if (!hasAxe) {
-                    result[result.length - 1] = requiredItem;
+                if (!hasRequiredItem) {
+                    var replaceIndex = Math.max(0, result.length - 1 - requiredIndex);
+                    result[replaceIndex] = requiredItem;
                 }
             }
 
@@ -903,7 +1116,15 @@
                 return true;
             }
 
-            if (isLogCell(candidate)) {
+            if (isWoodBlockCell(candidate)) {
+                return true;
+            }
+
+            if (isStoneBlockCell(candidate)) {
+                return true;
+            }
+
+            if (isCaveCell(candidate)) {
                 return true;
             }
 
@@ -942,8 +1163,14 @@
             for (var i = 0; i < treeCells.length; i++) {
                 blockedCells.push(treeCells[i]);
             }
-            for (var i = 0; i < logCells.length; i++) {
-                blockedCells.push(logCells[i]);
+            for (var i = 0; i < woodBlockCells.length; i++) {
+                blockedCells.push(woodBlockCells[i]);
+            }
+            for (var i = 0; i < stoneBlockCells.length; i++) {
+                blockedCells.push(stoneBlockCells[i]);
+            }
+            for (var i = 0; i < caveCells.length; i++) {
+                blockedCells.push(caveCells[i]);
             }
             for (var i = 0; i < enemies.length; i++) {
                 if (enemies[i] && enemies[i].alive) {
@@ -990,7 +1217,8 @@
             survivalEnemyCount = nextEnemyCount;
             currentDay += 1;
             spawnEnemyWave(nextEnemyCount);
-            addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land.');
+            addRandomTrees(dailyTreeGrowth, [heroPos, shopPos].concat(druidHouseCells, treasureCells.map(function(t) { return t.pos; }), treeCells, woodBlockCells, caveCells, enemies.filter(function(enemy) { return enemy && enemy.alive; }).map(function(enemy) { return enemy.pos; })));
+            addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land, and new trees spread across the wilds.');
             updateAdventureTitle();
         }
 
@@ -1035,7 +1263,7 @@
 
             for (var i = 0; i < directions.length; i++) {
                 var candidate = { x: pos.x + directions[i].x, y: pos.y + directions[i].y };
-                if (candidate.x >= 0 && candidate.x < 15 && candidate.y >= 0 && candidate.y < 15) {
+                if (candidate.x >= 0 && candidate.x < mapSize && candidate.y >= 0 && candidate.y < mapSize) {
                     options.push(candidate);
                 }
             }
@@ -1118,25 +1346,26 @@
         function getAdjacentCells(pos) {
             var cells = [];
             var step = hasHorse ? 3 : 1;
+            var maxIndex = mapSize - 1;
 
             if (pos.x > 0) cells.push({ x: pos.x - 1, y: pos.y, arrow: '←' });
-            if (pos.x < 14) cells.push({ x: pos.x + 1, y: pos.y, arrow: '→' });
+            if (pos.x < maxIndex) cells.push({ x: pos.x + 1, y: pos.y, arrow: '→' });
             if (pos.y > 0) cells.push({ x: pos.x, y: pos.y - 1, arrow: '↑' });
-            if (pos.y < 14) cells.push({ x: pos.x, y: pos.y + 1, arrow: '↓' });
+            if (pos.y < maxIndex) cells.push({ x: pos.x, y: pos.y + 1, arrow: '↓' });
             if (pos.x > 0 && pos.y > 0) cells.push({ x: pos.x - 1, y: pos.y - 1, arrow: '↖' });
-            if (pos.x < 14 && pos.y > 0) cells.push({ x: pos.x + 1, y: pos.y - 1, arrow: '↗' });
-            if (pos.x > 0 && pos.y < 14) cells.push({ x: pos.x - 1, y: pos.y + 1, arrow: '↙' });
-            if (pos.x < 14 && pos.y < 14) cells.push({ x: pos.x + 1, y: pos.y + 1, arrow: '↘' });
+            if (pos.x < maxIndex && pos.y > 0) cells.push({ x: pos.x + 1, y: pos.y - 1, arrow: '↗' });
+            if (pos.x > 0 && pos.y < maxIndex) cells.push({ x: pos.x - 1, y: pos.y + 1, arrow: '↙' });
+            if (pos.x < maxIndex && pos.y < maxIndex) cells.push({ x: pos.x + 1, y: pos.y + 1, arrow: '↘' });
 
             if (hasHorse) {
                 if (pos.x >= 3) cells.push({ x: pos.x - 3, y: pos.y, arrow: '←←←' });
-                if (pos.x <= 11) cells.push({ x: pos.x + 3, y: pos.y, arrow: '→→→' });
+                if (pos.x <= maxIndex - 3) cells.push({ x: pos.x + 3, y: pos.y, arrow: '→→→' });
                 if (pos.y >= 3) cells.push({ x: pos.x, y: pos.y - 3, arrow: '↑↑↑' });
-                if (pos.y <= 11) cells.push({ x: pos.x, y: pos.y + 3, arrow: '↓↓↓' });
+                if (pos.y <= maxIndex - 3) cells.push({ x: pos.x, y: pos.y + 3, arrow: '↓↓↓' });
                 if (pos.x >= 3 && pos.y >= 3) cells.push({ x: pos.x - 3, y: pos.y - 3, arrow: '↖↖↖' });
-                if (pos.x <= 11 && pos.y >= 3) cells.push({ x: pos.x + 3, y: pos.y - 3, arrow: '↗↗↗' });
-                if (pos.x >= 3 && pos.y <= 11) cells.push({ x: pos.x - 3, y: pos.y + 3, arrow: '↙↙↙' });
-                if (pos.x <= 11 && pos.y <= 11) cells.push({ x: pos.x + 3, y: pos.y + 3, arrow: '↘↘↘' });
+                if (pos.x <= maxIndex - 3 && pos.y >= 3) cells.push({ x: pos.x + 3, y: pos.y - 3, arrow: '↗↗↗' });
+                if (pos.x >= 3 && pos.y <= maxIndex - 3) cells.push({ x: pos.x - 3, y: pos.y + 3, arrow: '↙↙↙' });
+                if (pos.x <= maxIndex - 3 && pos.y <= maxIndex - 3) cells.push({ x: pos.x + 3, y: pos.y + 3, arrow: '↘↘↘' });
             }
 
             return cells;
@@ -1184,16 +1413,6 @@
             return null;
         }
 
-        function isLogCell(pos) {
-            for (var i = 0; i < logCells.length; i++) {
-                var log = logCells[i];
-                if (log.x === pos.x && log.y === pos.y) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         function isDruidHouseCell(pos) {
             for (var i = 0; i < druidHouseCells.length; i++) {
                 var cell = druidHouseCells[i];
@@ -1214,6 +1433,40 @@
             return false;
         }
 
+        function isWoodBlockCell(pos) {
+            for (var i = 0; i < woodBlockCells.length; i++) {
+                var block = woodBlockCells[i];
+                if (block.x === pos.x && block.y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function isStoneBlockCell(pos) {
+            for (var i = 0; i < stoneBlockCells.length; i++) {
+                var block = stoneBlockCells[i];
+                if (block.x === pos.x && block.y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function getCaveCell(pos) {
+            for (var i = 0; i < caveCells.length; i++) {
+                var caveCell = caveCells[i];
+                if (caveCell.x === pos.x && caveCell.y === pos.y) {
+                    return caveCell;
+                }
+            }
+            return null;
+        }
+
+        function isCaveCell(pos) {
+            return !!getCaveCell(pos);
+        }
+
         function getAdjacentDruidHouseCell(pos) {
             for (var i = 0; i < druidHouseCells.length; i++) {
                 if (isDirectlyAdjacent(pos, druidHouseCells[i])) {
@@ -1232,35 +1485,309 @@
             return null;
         }
 
+        function getAdjacentCaveCell(pos) {
+            for (var i = 0; i < caveCells.length; i++) {
+                if (isWithinOneCell(pos, caveCells[i]) && !isSameCell(pos, caveCells[i])) {
+                    return caveCells[i];
+                }
+            }
+            return null;
+        }
+
         function hasEquippedAxe() {
             return (equippedItems.mainHand && equippedItems.mainHand.name === 'Axe') || (equippedItems.offHand && equippedItems.offHand.name === 'Axe');
         }
 
+        function hasEquippedPickaxe() {
+            return (equippedItems.mainHand && equippedItems.mainHand.name === 'Pickaxe') || (equippedItems.offHand && equippedItems.offHand.name === 'Pickaxe');
+        }
+
         function spawnLogOnLeftSide() {
-            var startY = Math.floor(Math.random() * 15);
-            for (var offset = 0; offset < 15; offset++) {
-                var y = (startY + offset) % 15;
-                var candidate = { x: 0, y: y };
+            logCells.push({ id: Date.now() + '_' + Math.floor(Math.random() * 100000) });
+            addEvent('A chopped log appears left of the map.');
+            return true;
+        }
 
-                if (candidate.x === heroPos.x && candidate.y === heroPos.y) {
-                    continue;
-                }
-
-                if (candidate.x === shopPos.x && candidate.y === shopPos.y) {
-                    continue;
-                }
-
-                if (isDruidHouseCell(candidate) || isTreeCell(candidate) || isLogCell(candidate) || getTreasureAt(candidate) || getEnemyAt(candidate)) {
-                    continue;
-                }
-
-                logCells.push(candidate);
-                addEvent('A chopped log appears on the left side of the map.');
-                return true;
+        function renderLeftLogs() {
+            var leftLogsPanel = document.getElementById('leftLogsPanel');
+            if (!leftLogsPanel) {
+                return;
             }
 
-            addEvent('No free space remains on the left side for a new log.');
+            leftLogsPanel.innerHTML = '';
+
+            var logsTitle = document.createElement('div');
+            logsTitle.className = 'resourceSectionTitle';
+            logsTitle.textContent = 'Logs';
+            leftLogsPanel.appendChild(logsTitle);
+
+            if (!logCells || logCells.length === 0) {
+                var empty = document.createElement('div');
+                empty.className = 'leftLogsEmpty';
+                empty.textContent = 'No logs';
+                leftLogsPanel.appendChild(empty);
+                return;
+            }
+
+            for (var i = 0; i < logCells.length; i++) {
+                var logItem = document.createElement('div');
+                logItem.className = 'leftLogItem';
+                logItem.textContent = 'LOG';
+                leftLogsPanel.appendChild(logItem);
+            }
+
+            var rocksTitle = document.createElement('div');
+            rocksTitle.className = 'resourceSectionTitle';
+            rocksTitle.textContent = 'Rocks';
+            leftLogsPanel.appendChild(rocksTitle);
+
+            if (!minedRockItems || minedRockItems.length === 0) {
+                var emptyRocks = document.createElement('div');
+                emptyRocks.className = 'leftLogsEmpty';
+                emptyRocks.textContent = 'No rocks';
+                leftLogsPanel.appendChild(emptyRocks);
+                return;
+            }
+
+            for (var r = 0; r < minedRockItems.length; r++) {
+                var rockItem = document.createElement('div');
+                rockItem.className = 'leftRockItem';
+                rockItem.textContent = 'ROCK';
+                leftLogsPanel.appendChild(rockItem);
+            }
+        }
+
+        function renderCaveResources() {
+            var caveResourcePanel = document.getElementById('caveResourcePanel');
+            if (!caveResourcePanel) {
+                return;
+            }
+
+            caveResourcePanel.innerHTML = '';
+
+            var rocksTitle = document.createElement('div');
+            rocksTitle.className = 'resourceSectionTitle';
+            rocksTitle.textContent = 'Rocks';
+            caveResourcePanel.appendChild(rocksTitle);
+
+            if (!minedRockItems || minedRockItems.length === 0) {
+                var empty = document.createElement('div');
+                empty.className = 'leftLogsEmpty';
+                empty.textContent = 'No rocks';
+                caveResourcePanel.appendChild(empty);
+                return;
+            }
+
+            for (var i = 0; i < minedRockItems.length; i++) {
+                var rockItem = document.createElement('div');
+                rockItem.className = 'leftRockItem';
+                rockItem.textContent = 'ROCK';
+                caveResourcePanel.appendChild(rockItem);
+            }
+        }
+
+        function generateCaveRocks() {
+            caveRockCells = [];
+            var blockedCells = [caveHeroPos];
+
+            for (var rockIndex = 0; rockIndex < 16; rockIndex++) {
+                var rockPos = {
+                    x: Math.floor(Math.random() * caveSize),
+                    y: Math.floor(Math.random() * caveSize)
+                };
+                var blocked = true;
+
+                while (blocked) {
+                    blocked = false;
+                    for (var i = 0; i < blockedCells.length; i++) {
+                        if (blockedCells[i].x === rockPos.x && blockedCells[i].y === rockPos.y) {
+                            rockPos = {
+                                x: Math.floor(Math.random() * caveSize),
+                                y: Math.floor(Math.random() * caveSize)
+                            };
+                            blocked = true;
+                            break;
+                        }
+                    }
+                }
+
+                caveRockCells.push(rockPos);
+                blockedCells.push(rockPos);
+            }
+        }
+
+        function isCaveRockCell(pos) {
+            for (var i = 0; i < caveRockCells.length; i++) {
+                var rock = caveRockCells[i];
+                if (rock.x === pos.x && rock.y === pos.y) {
+                    return true;
+                }
+            }
             return false;
+        }
+
+        function getAdjacentCaveRockCell(pos) {
+            for (var i = 0; i < caveRockCells.length; i++) {
+                if (isWithinOneCell(pos, caveRockCells[i]) && !isSameCell(pos, caveRockCells[i])) {
+                    return caveRockCells[i];
+                }
+            }
+            return null;
+        }
+
+        function renderCaveGrid() {
+            var caveGrid = document.getElementById('caveGrid');
+            if (!caveGrid) {
+                return;
+            }
+
+            caveGrid.innerHTML = '';
+
+            for (var y = 0; y < caveSize; y++) {
+                for (var x = 0; x < caveSize; x++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'caveCell';
+
+                    if (x === caveHeroPos.x && y === caveHeroPos.y) {
+                        cell.textContent = 'H';
+                        cell.classList.add('hero');
+                    } else if (isCaveRockCell({ x: x, y: y })) {
+                        cell.classList.add('rock');
+                    } else {
+                        var adjacent = getAdjacentCaveCells(caveHeroPos);
+                        for (var i = 0; i < adjacent.length; i++) {
+                            if (adjacent[i].x === x && adjacent[i].y === y) {
+                                cell.innerHTML = '<button class="moveButton" onclick="moveHeroTo(' + x + ', ' + y + ')">' + adjacent[i].arrow + '</button>';
+                                break;
+                            }
+                        }
+                    }
+
+                    caveGrid.appendChild(cell);
+                }
+            }
+        }
+
+        function getAdjacentCaveCells(pos) {
+            var cells = [];
+
+            if (pos.x > 0) cells.push({ x: pos.x - 1, y: pos.y, arrow: '←' });
+            if (pos.x < caveSize - 1) cells.push({ x: pos.x + 1, y: pos.y, arrow: '→' });
+            if (pos.y > 0) cells.push({ x: pos.x, y: pos.y - 1, arrow: '↑' });
+            if (pos.y < caveSize - 1) cells.push({ x: pos.x, y: pos.y + 1, arrow: '↓' });
+            if (pos.x > 0 && pos.y > 0) cells.push({ x: pos.x - 1, y: pos.y - 1, arrow: '↖' });
+            if (pos.x < caveSize - 1 && pos.y > 0) cells.push({ x: pos.x + 1, y: pos.y - 1, arrow: '↗' });
+            if (pos.x > 0 && pos.y < caveSize - 1) cells.push({ x: pos.x - 1, y: pos.y + 1, arrow: '↙' });
+            if (pos.x < caveSize - 1 && pos.y < caveSize - 1) cells.push({ x: pos.x + 1, y: pos.y + 1, arrow: '↘' });
+
+            return cells;
+        }
+
+        function toggleCave() {
+            if (gameOver || battleActive) {
+                return;
+            }
+
+            if (!inCave && !getAdjacentCaveCell(heroPos)) {
+                return;
+            }
+
+            inCave = !inCave;
+            if (inCave) {
+                caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
+                generateCaveRocks();
+            }
+            renderBattle();
+        }
+
+        function mineRock() {
+            if (gameOver || battleActive || !inCave) {
+                return;
+            }
+
+            if (!hasEquippedPickaxe()) {
+                addEvent('Hero needs an equipped Pickaxe to mine rocks.');
+                renderBattle();
+                return;
+            }
+
+            var nearbyRock = getAdjacentCaveRockCell(caveHeroPos);
+            if (!nearbyRock) {
+                addEvent('No rock is close enough to mine.');
+                renderBattle();
+                return;
+            }
+
+            caveRockCells = caveRockCells.filter(function(rock) {
+                return !(rock.x === nearbyRock.x && rock.y === nearbyRock.y);
+            });
+            minedRockItems.push({ id: Date.now() + '_' + Math.floor(Math.random() * 100000) });
+            addEvent('Hero mines a rock in the cave.');
+            renderBattle();
+        }
+
+        function refreshExplorationUi() {
+            var battleScreen = document.getElementById('battleScreen');
+            var battleInfo = document.getElementById('battleInfo');
+            var attackButton = document.getElementById('attackButton');
+            var fleeButton = document.getElementById('fleeButton');
+            var shopButton = document.getElementById('shopButton');
+            var druidHouseButton = document.getElementById('druidHouseButton');
+            var chopTreeButton = document.getElementById('chopTreeButton');
+            var buildButton = document.getElementById('buildButton');
+            var caveButton = document.getElementById('caveButton');
+            var mineButton = document.getElementById('mineButton');
+            var treasureButton = document.getElementById('treasureButton');
+            var leftLogsPanel = document.getElementById('leftLogsPanel');
+            var nearbyEnemy = getNearbyEnemy(heroPos);
+            var onShop = isWithinOneCell(heroPos, shopPos);
+            var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !gameOver;
+            var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !gameOver;
+            var onCave = !!getAdjacentCaveCell(heroPos) && !gameOver;
+            var canUseDruid = canUseDruidHouseToday();
+            var onTreasure = !!getNearbyTreasure(heroPos) && !gameOver;
+
+            if (battleScreen) {
+                battleScreen.style.display = 'block';
+            }
+
+            attackButton.style.display = nearbyEnemy ? 'inline-block' : 'none';
+            if (nearbyEnemy) {
+                attackButton.textContent = 'Fight';
+            }
+            fleeButton.style.display = 'none';
+            shopButton.style.display = onShop ? 'inline-block' : 'none';
+            druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
+            chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
+            buildButton.style.display = 'inline-block';
+            buildButton.disabled = !logCells || logCells.length === 0;
+            caveButton.style.display = onCave || inCave ? 'inline-block' : 'none';
+            caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
+            mineButton.style.display = 'none';
+            treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
+
+            if (leftLogsPanel) {
+                leftLogsPanel.style.display = 'flex';
+            }
+
+            if (nearbyEnemy) {
+                battleInfo.textContent = 'Enemy is nearby!';
+            } else if (onShop) {
+                battleInfo.textContent = 'You are at the shop. Enter to browse gear.';
+            } else if (onDruidHouse) {
+                battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 5 HP.' : 'The druid house already healed you today. Return tomorrow.';
+            } else if (onTreeWithAxe) {
+                battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
+            } else if (onCave) {
+                battleInfo.textContent = 'A cave is next to you. Enter to explore it.';
+            } else if (onTreasure) {
+                battleInfo.textContent = 'You found treasure. Open it to claim your reward.';
+            } else {
+                battleInfo.textContent = 'Choose a move with an arrow.';
+            }
+
+            showBattleMap(true);
+            renderLeftLogs();
         }
 
         function chopTree() {
@@ -1269,11 +1796,15 @@
             }
 
             if (!hasEquippedAxe()) {
+                addEvent('Hero needs an equipped Axe to chop trees.');
+                renderBattle();
                 return;
             }
 
             var nearbyTree = getAdjacentTreeCell(heroPos);
             if (!nearbyTree) {
+                addEvent('No tree is close enough to chop.');
+                renderBattle();
                 return;
             }
 
@@ -1284,6 +1815,58 @@
             addEvent('Hero chops down a tree with the axe.');
             spawnLogOnLeftSide();
             renderBattle();
+        }
+
+        function buildFromLogs() {
+            if (gameOver || battleActive) {
+                return;
+            }
+
+            if (!logCells || logCells.length === 0) {
+                addEvent('You need at least one chopped log to build.');
+                refreshExplorationUi();
+                return;
+            }
+
+            if (isWoodBlockCell(heroPos)) {
+                addEvent('A wooden block is already built here.');
+                refreshExplorationUi();
+                return;
+            }
+
+            logCells.pop();
+            woodBlockCells.push({ x: heroPos.x, y: heroPos.y });
+            addEvent('Hero builds a wooden block using one chopped log.');
+            refreshExplorationUi();
+        }
+
+        function buildFromRocks() {
+            if (gameOver || battleActive || inCave) {
+                return;
+            }
+
+            if (!minedRockItems || minedRockItems.length === 0) {
+                addEvent('You need at least one mined rock to build a stone block.');
+                refreshExplorationUi();
+                return;
+            }
+
+            if (isStoneBlockCell(heroPos)) {
+                addEvent('A stone block is already built here.');
+                refreshExplorationUi();
+                return;
+            }
+
+            if (isWoodBlockCell(heroPos)) {
+                addEvent('A wooden block is already built here.');
+                refreshExplorationUi();
+                return;
+            }
+
+            minedRockItems.pop();
+            stoneBlockCells.push({ x: heroPos.x, y: heroPos.y });
+            addEvent('Hero builds a stone block using one mined rock.');
+            refreshExplorationUi();
         }
 
         function canUseDruidHouseToday() {
@@ -1592,14 +2175,46 @@
                 return;
             }
 
+            if (inCave) {
+                if (isCaveRockCell({ x: x, y: y })) {
+                    addEvent('Hero cannot move into a rock.');
+                    renderBattle();
+                    return;
+                }
+                caveHeroPos = { x: x, y: y };
+                renderBattle();
+                return;
+            }
+
             if (isTreeCell({ x: x, y: y })) {
+                if (hasEquippedAxe()) {
+                    treeCells = treeCells.filter(function(tree) {
+                        return !(tree.x === x && tree.y === y);
+                    });
+                    addEvent('Turn ' + (turnNumber + 1) + '. Hero chops down a tree with the axe.');
+                    spawnLogOnLeftSide();
+                    renderBattle();
+                    return;
+                }
                 addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a tree.');
                 renderBattle();
                 return;
             }
 
-            if (isLogCell({ x: x, y: y })) {
-                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a log.');
+            if (isWoodBlockCell({ x: x, y: y })) {
+                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a wooden block.');
+                renderBattle();
+                return;
+            }
+
+            if (isStoneBlockCell({ x: x, y: y })) {
+                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a stone block.');
+                renderBattle();
+                return;
+            }
+
+            if (isCaveCell({ x: x, y: y })) {
+                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into the cave.');
                 renderBattle();
                 return;
             }
@@ -1664,17 +2279,20 @@
 
         function renderBattle() {
             var battleGrid = document.getElementById('battleGrid');
+            var caveGrid = document.getElementById('caveGrid');
+            var mapWithLeftLogs = document.querySelector('.mapWithLeftLogs');
             var battleInfo = document.getElementById('battleInfo');
             var battleStats = document.getElementById('battleStats');
             var heroBattlePanel = document.getElementById('heroBattlePanel');
             var enemyBattlePanel = document.getElementById('enemyBattlePanel');
+            var leftLogsPanel = document.getElementById('leftLogsPanel');
             battleGrid.innerHTML = '';
 
             var nearbyEnemy = getNearbyEnemy(heroPos);
             var enemyOnTile = getEnemyAt(heroPos);
 
-            for (var y = 0; y < 15; y++) {
-                for (var x = 0; x < 15; x++) {
+            for (var y = 0; y < mapSize; y++) {
+                for (var x = 0; x < mapSize; x++) {
                     var cell = document.createElement('div');
                     cell.className = 'battleCell';
 
@@ -1693,9 +2311,16 @@
                     } else if (isTreeCell({ x: x, y: y })) {
                         cell.textContent = 'TR';
                         cell.classList.add('tree');
-                    } else if (isLogCell({ x: x, y: y })) {
-                        cell.textContent = 'L';
-                        cell.classList.add('log');
+                    } else if (isWoodBlockCell({ x: x, y: y })) {
+                        cell.textContent = 'WB';
+                        cell.classList.add('woodBlock');
+                    } else if (isStoneBlockCell({ x: x, y: y })) {
+                        cell.textContent = 'SB';
+                        cell.classList.add('stoneBlock');
+                    } else if (getCaveCell({ x: x, y: y })) {
+                        var caveCell = getCaveCell({ x: x, y: y });
+                        cell.textContent = '';
+                        cell.classList.add(caveCell.isCenter ? 'caveCenter' : 'cave');
                     } else {
                         var enemyAtCell = getEnemyAt({ x: x, y: y });
                         if (enemyAtCell) {
@@ -1723,6 +2348,10 @@
                 }
             }
 
+            renderLeftLogs();
+            renderCaveGrid();
+            renderCaveResources();
+
             heroBattlePanel.innerHTML = '<strong>' + heroStats.name + '</strong><br>HP ' + heroStats.currentHealth + '/' + heroStats.healthPoints + '<br>Damage ' + getHeroDamage() + '<br>Armor ' + getHeroArmor();
 
             if (battleActive && currentEnemy) {
@@ -1740,10 +2369,16 @@
             var shopButton = document.getElementById('shopButton');
             var druidHouseButton = document.getElementById('druidHouseButton');
             var chopTreeButton = document.getElementById('chopTreeButton');
+            var buildButton = document.getElementById('buildButton');
+            var stoneBuildButton = document.getElementById('stoneBuildButton');
+            var caveButton = document.getElementById('caveButton');
+            var mineButton = document.getElementById('mineButton');
             var treasureButton = document.getElementById('treasureButton');
             var onShop = isWithinOneCell(heroPos, shopPos);
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !battleActive && !gameOver;
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !battleActive && !gameOver;
+            var onCave = !!getAdjacentCaveCell(heroPos) && !battleActive && !gameOver;
+            var onCaveRock = !!getAdjacentCaveRockCell(caveHeroPos) && hasEquippedPickaxe() && inCave && !battleActive && !gameOver;
             var canUseDruid = canUseDruidHouseToday();
             var onTreasure = !!getNearbyTreasure(heroPos) && !battleActive && !gameOver;
 
@@ -1754,7 +2389,20 @@
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
                 chopTreeButton.style.display = 'none';
+                buildButton.style.display = 'none';
+                stoneBuildButton.style.display = 'none';
+                caveButton.style.display = 'none';
+                mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                if (leftLogsPanel) {
+                    leftLogsPanel.style.display = 'none';
+                }
+                if (mapWithLeftLogs) {
+                    mapWithLeftLogs.style.display = 'flex';
+                }
+                if (caveGrid) {
+                    caveGrid.style.display = 'none';
+                }
                 showBattleMap(false);
             } else if (battleActive) {
                 battleInfo.textContent = 'Battle begins!';
@@ -1764,13 +2412,74 @@
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
                 chopTreeButton.style.display = 'none';
+                buildButton.style.display = 'none';
+                stoneBuildButton.style.display = 'none';
+                caveButton.style.display = 'none';
+                mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                if (leftLogsPanel) {
+                    leftLogsPanel.style.display = 'none';
+                }
+                if (mapWithLeftLogs) {
+                    mapWithLeftLogs.style.display = 'flex';
+                }
+                if (caveGrid) {
+                    caveGrid.style.display = 'none';
+                }
                 showBattleMap(false);
             } else {
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
                 druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
                 chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
+                buildButton.style.display = 'inline-block';
+                buildButton.disabled = !logCells || logCells.length === 0;
+                stoneBuildButton.style.display = inCave ? 'none' : 'inline-block';
+                stoneBuildButton.disabled = !minedRockItems || minedRockItems.length === 0;
+                caveButton.style.display = onCave || inCave ? 'inline-block' : 'none';
+                caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
+                mineButton.style.display = onCaveRock ? 'inline-block' : 'none';
                 treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
+                if (leftLogsPanel) {
+                    leftLogsPanel.style.display = 'flex';
+                }
+
+                if (inCave) {
+                    if (mapWithLeftLogs) {
+                        mapWithLeftLogs.style.display = 'none';
+                    }
+                    if (caveGrid) {
+                        caveGrid.style.display = 'grid';
+                    }
+                    var caveViewLayout = document.getElementById('caveViewLayout');
+                    if (caveViewLayout) {
+                        caveViewLayout.style.display = 'flex';
+                    }
+                    if (leftLogsPanel) {
+                        leftLogsPanel.style.display = 'none';
+                    }
+                    battleInfo.textContent = onCaveRock ? 'A rock is next to you. Mine it.' : hasEquippedPickaxe() ? 'Inside the cave.' : 'Inside the cave. Equip a Pickaxe to mine rocks.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    shopButton.style.display = 'none';
+                    druidHouseButton.style.display = 'none';
+                    chopTreeButton.style.display = 'none';
+                    buildButton.style.display = 'none';
+                    stoneBuildButton.style.display = 'none';
+                    treasureButton.style.display = 'none';
+                    showBattleMap(false);
+                    return;
+                }
+
+                if (mapWithLeftLogs) {
+                    mapWithLeftLogs.style.display = 'flex';
+                }
+                if (caveGrid) {
+                    caveGrid.style.display = 'none';
+                }
+                var caveViewLayout = document.getElementById('caveViewLayout');
+                if (caveViewLayout) {
+                    caveViewLayout.style.display = 'none';
+                }
 
                 if (nearbyEnemy) {
                     battleInfo.textContent = 'Enemy is nearby!';
@@ -1790,6 +2499,11 @@
                     showBattleMap(true);
                 } else if (onTreeWithAxe) {
                     battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    showBattleMap(true);
+                } else if (onCave) {
+                    battleInfo.textContent = 'A cave is next to you. Enter to explore it.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -1883,6 +2597,12 @@
 
             heroStats.currentHealth = heroStats.healthPoints;
             heroPos = getRandomCell();
+            caveCells = getDailyCaveCells();
+            inCave = false;
+            caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
+            while (isCaveCell(heroPos)) {
+                heroPos = getRandomCell();
+            }
             enemies = [];
             enemiesKilled = 0;
             goldAcquired = 0;
@@ -1892,7 +2612,7 @@
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
             updateAdventureTitle();
-            var blockedCells = [heroPos];
+            var blockedCells = [heroPos].concat(caveCells);
 
             for (var i = 0; i < survivalEnemyCount; i++) {
                 var enemyPos = getRandomCell();
@@ -1943,12 +2663,14 @@
             treasureCells = [];
             treeCells = [];
             logCells = [];
+            woodBlockCells = [];
+            stoneBlockCells = [];
             var houseCell = getRandomCell();
             var houseAdjacent = { x: houseCell.x + 1, y: houseCell.y };
-            if (houseAdjacent.x > 14 || blockedCells.some(function(c) { return c.x === houseAdjacent.x && c.y === houseAdjacent.y; })) {
+            if (houseAdjacent.x > mapSize - 1 || blockedCells.some(function(c) { return c.x === houseAdjacent.x && c.y === houseAdjacent.y; })) {
                 houseAdjacent = { x: houseCell.x, y: houseCell.y + 1 };
             }
-            if (houseAdjacent.x <= 14 && houseAdjacent.y <= 14 && !blockedCells.some(function(c) { return c.x === houseAdjacent.x && c.y === houseAdjacent.y; })) {
+            if (houseAdjacent.x <= mapSize - 1 && houseAdjacent.y <= mapSize - 1 && !blockedCells.some(function(c) { return c.x === houseAdjacent.x && c.y === houseAdjacent.y; })) {
                 druidHouseCells = [houseCell, houseAdjacent];
             } else {
                 // fallback to a second random adjacent cell
@@ -1956,7 +2678,7 @@
                     for (var y = -1; y <= 1 && druidHouseCells.length === 0; y++) {
                         if (Math.abs(x) + Math.abs(y) === 1) {
                             var candidate = { x: houseCell.x + x, y: houseCell.y + y };
-                            if (candidate.x >= 0 && candidate.x < 15 && candidate.y >= 0 && candidate.y < 15 && !blockedCells.some(function(c) { return c.x === candidate.x && c.y === candidate.y; })) {
+                            if (candidate.x >= 0 && candidate.x < mapSize && candidate.y >= 0 && candidate.y < mapSize && !blockedCells.some(function(c) { return c.x === candidate.x && c.y === candidate.y; })) {
                                 druidHouseCells = [houseCell, candidate];
                             }
                         }
@@ -1986,22 +2708,7 @@
                 blockedCells.push(treasurePos);
             }
 
-            for (var tr = 0; tr < 15; tr++) {
-                var treePos = getRandomCell();
-                var treeBlocked = false;
-                while (!treeBlocked) {
-                    treeBlocked = true;
-                    for (var c = 0; c < blockedCells.length; c++) {
-                        if (blockedCells[c].x === treePos.x && blockedCells[c].y === treePos.y) {
-                            treePos = getRandomCell();
-                            treeBlocked = false;
-                            break;
-                        }
-                    }
-                }
-                treeCells.push(treePos);
-                blockedCells.push(treePos);
-            }
+            addRandomTrees(initialTreeCount, blockedCells);
 
             currentEnemy = null;
             enemyCurrentHealth = 0;
@@ -2052,7 +2759,8 @@
                         { name: 'Brigandine', slot: 'torso', price: 45, properties: { damage: 0, armor: 5 } },
                         { name: 'Mail', slot: 'torso', price: 60, properties: { damage: 0, armor: 6 } },
                         { name: 'Horse', slot: 'none', price: 300, properties: { damage: 0, armor: 0 } },
-                        { name: 'Axe', slot: 'main hand', price: 28, properties: { damage: 11, armor: 0 } }
+                        { name: 'Axe', slot: 'main hand', price: 28, properties: { damage: 11, armor: 0 } },
+                        { name: 'Pickaxe', slot: 'main hand', price: 26, properties: { damage: 6, armor: 0 } }
                     ];
                     shopItems = getRandomShopItems(allItems, 10);
                     enemyTemplates = [
