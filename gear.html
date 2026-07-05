@@ -245,6 +245,18 @@
             font-weight: bold;
         }
 
+        .battleCell.tree {
+            background-color: #1b5e20;
+            color: #d6f5d6;
+            font-weight: bold;
+        }
+
+        .battleCell.log {
+            background-color: #6d4c41;
+            color: #fff3e0;
+            font-weight: bold;
+        }
+
         .moveButton {
             width: 100%;
             height: 100%;
@@ -281,6 +293,10 @@
 
         #druidHouseButton {
             background: #8b5a2b;
+        }
+
+        #chopTreeButton {
+            background: #1b5e20;
         }
 
         .fleeButton {
@@ -424,6 +440,7 @@
         <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
         <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
+        <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
         <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
         <div class="adventureLayout">
             <div class="adventureMain">
@@ -470,6 +487,8 @@
         var shopPos = { x: 0, y: 0 };
         var druidHouseCells = [];
         var treasureCells = [];
+        var treeCells = [];
+        var logCells = [];
         var battleActive = false;
         var gameOver = false;
         var enemyTemplates = [];
@@ -572,6 +591,8 @@
             shopPos = { x: 0, y: 0 };
             druidHouseCells = [];
             treasureCells = [];
+            treeCells = [];
+            logCells = [];
             enemies = [];
             currentEnemy = null;
             enemyCurrentHealth = 0;
@@ -833,6 +854,27 @@
                 source.splice(randomIndex, 1);
             }
 
+            var requiredItem = null;
+            for (var j = 0; j < items.length; j++) {
+                if (items[j] && items[j].name === 'Axe') {
+                    requiredItem = items[j];
+                    break;
+                }
+            }
+
+            if (requiredItem && result.length > 0) {
+                var hasAxe = false;
+                for (var k = 0; k < result.length; k++) {
+                    if (result[k] && result[k].name === 'Axe') {
+                        hasAxe = true;
+                        break;
+                    }
+                }
+                if (!hasAxe) {
+                    result[result.length - 1] = requiredItem;
+                }
+            }
+
             return result;
         }
 
@@ -854,6 +896,14 @@
             }
 
             if (getTreasureAt(candidate)) {
+                return true;
+            }
+
+            if (isTreeCell(candidate)) {
+                return true;
+            }
+
+            if (isLogCell(candidate)) {
                 return true;
             }
 
@@ -888,6 +938,12 @@
             }
             for (var i = 0; i < treasureCells.length; i++) {
                 blockedCells.push(treasureCells[i].pos);
+            }
+            for (var i = 0; i < treeCells.length; i++) {
+                blockedCells.push(treeCells[i]);
+            }
+            for (var i = 0; i < logCells.length; i++) {
+                blockedCells.push(logCells[i]);
             }
             for (var i = 0; i < enemies.length; i++) {
                 if (enemies[i] && enemies[i].alive) {
@@ -1128,10 +1184,30 @@
             return null;
         }
 
+        function isLogCell(pos) {
+            for (var i = 0; i < logCells.length; i++) {
+                var log = logCells[i];
+                if (log.x === pos.x && log.y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function isDruidHouseCell(pos) {
             for (var i = 0; i < druidHouseCells.length; i++) {
                 var cell = druidHouseCells[i];
                 if (cell.x === pos.x && cell.y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function isTreeCell(pos) {
+            for (var i = 0; i < treeCells.length; i++) {
+                var tree = treeCells[i];
+                if (tree.x === pos.x && tree.y === pos.y) {
                     return true;
                 }
             }
@@ -1145,6 +1221,69 @@
                 }
             }
             return null;
+        }
+
+        function getAdjacentTreeCell(pos) {
+            for (var i = 0; i < treeCells.length; i++) {
+                if (isWithinOneCell(pos, treeCells[i]) && !isSameCell(pos, treeCells[i])) {
+                    return treeCells[i];
+                }
+            }
+            return null;
+        }
+
+        function hasEquippedAxe() {
+            return (equippedItems.mainHand && equippedItems.mainHand.name === 'Axe') || (equippedItems.offHand && equippedItems.offHand.name === 'Axe');
+        }
+
+        function spawnLogOnLeftSide() {
+            var startY = Math.floor(Math.random() * 15);
+            for (var offset = 0; offset < 15; offset++) {
+                var y = (startY + offset) % 15;
+                var candidate = { x: 0, y: y };
+
+                if (candidate.x === heroPos.x && candidate.y === heroPos.y) {
+                    continue;
+                }
+
+                if (candidate.x === shopPos.x && candidate.y === shopPos.y) {
+                    continue;
+                }
+
+                if (isDruidHouseCell(candidate) || isTreeCell(candidate) || isLogCell(candidate) || getTreasureAt(candidate) || getEnemyAt(candidate)) {
+                    continue;
+                }
+
+                logCells.push(candidate);
+                addEvent('A chopped log appears on the left side of the map.');
+                return true;
+            }
+
+            addEvent('No free space remains on the left side for a new log.');
+            return false;
+        }
+
+        function chopTree() {
+            if (gameOver || battleActive) {
+                return;
+            }
+
+            if (!hasEquippedAxe()) {
+                return;
+            }
+
+            var nearbyTree = getAdjacentTreeCell(heroPos);
+            if (!nearbyTree) {
+                return;
+            }
+
+            treeCells = treeCells.filter(function(tree) {
+                return !(tree.x === nearbyTree.x && tree.y === nearbyTree.y);
+            });
+
+            addEvent('Hero chops down a tree with the axe.');
+            spawnLogOnLeftSide();
+            renderBattle();
         }
 
         function canUseDruidHouseToday() {
@@ -1453,6 +1592,18 @@
                 return;
             }
 
+            if (isTreeCell({ x: x, y: y })) {
+                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a tree.');
+                renderBattle();
+                return;
+            }
+
+            if (isLogCell({ x: x, y: y })) {
+                addEvent('Turn ' + (turnNumber + 1) + '. Hero cannot move into a log.');
+                renderBattle();
+                return;
+            }
+
             var oldPos = { x: heroPos.x, y: heroPos.y };
             heroPos = { x: x, y: y };
             turnNumber = turnNumber + 1;
@@ -1539,6 +1690,12 @@
                     } else if (getTreasureAt({ x: x, y: y })) {
                         cell.textContent = 'T';
                         cell.classList.add('treasure');
+                    } else if (isTreeCell({ x: x, y: y })) {
+                        cell.textContent = 'TR';
+                        cell.classList.add('tree');
+                    } else if (isLogCell({ x: x, y: y })) {
+                        cell.textContent = 'L';
+                        cell.classList.add('log');
                     } else {
                         var enemyAtCell = getEnemyAt({ x: x, y: y });
                         if (enemyAtCell) {
@@ -1582,9 +1739,11 @@
             var fleeButton = document.getElementById('fleeButton');
             var shopButton = document.getElementById('shopButton');
             var druidHouseButton = document.getElementById('druidHouseButton');
+            var chopTreeButton = document.getElementById('chopTreeButton');
             var treasureButton = document.getElementById('treasureButton');
             var onShop = isWithinOneCell(heroPos, shopPos);
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !battleActive && !gameOver;
+            var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !battleActive && !gameOver;
             var canUseDruid = canUseDruidHouseToday();
             var onTreasure = !!getNearbyTreasure(heroPos) && !battleActive && !gameOver;
 
@@ -1594,6 +1753,7 @@
                 fleeButton.style.display = 'none';
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
+                chopTreeButton.style.display = 'none';
                 treasureButton.style.display = 'none';
                 showBattleMap(false);
             } else if (battleActive) {
@@ -1603,11 +1763,13 @@
                 fleeButton.style.display = 'inline-block';
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
+                chopTreeButton.style.display = 'none';
                 treasureButton.style.display = 'none';
                 showBattleMap(false);
             } else {
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
                 druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
+                chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
                 treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
 
                 if (nearbyEnemy) {
@@ -1623,6 +1785,11 @@
                     showBattleMap(true);
                 } else if (onDruidHouse) {
                     battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 5 HP.' : 'The druid house already healed you today. Return tomorrow.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    showBattleMap(true);
+                } else if (onTreeWithAxe) {
+                    battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -1774,6 +1941,8 @@
             shopPos = shopCell;
             druidHouseCells = [];
             treasureCells = [];
+            treeCells = [];
+            logCells = [];
             var houseCell = getRandomCell();
             var houseAdjacent = { x: houseCell.x + 1, y: houseCell.y };
             if (houseAdjacent.x > 14 || blockedCells.some(function(c) { return c.x === houseAdjacent.x && c.y === houseAdjacent.y; })) {
@@ -1815,6 +1984,23 @@
                 }
                 treasureCells.push({ pos: treasurePos, gold: 10 + Math.floor(Math.random() * 11) });
                 blockedCells.push(treasurePos);
+            }
+
+            for (var tr = 0; tr < 15; tr++) {
+                var treePos = getRandomCell();
+                var treeBlocked = false;
+                while (!treeBlocked) {
+                    treeBlocked = true;
+                    for (var c = 0; c < blockedCells.length; c++) {
+                        if (blockedCells[c].x === treePos.x && blockedCells[c].y === treePos.y) {
+                            treePos = getRandomCell();
+                            treeBlocked = false;
+                            break;
+                        }
+                    }
+                }
+                treeCells.push(treePos);
+                blockedCells.push(treePos);
             }
 
             currentEnemy = null;
@@ -1865,7 +2051,8 @@
                         { name: 'Rusty Sword', slot: 'main hand', price: 16, properties: { damage: 8, armor: 0 } },
                         { name: 'Brigandine', slot: 'torso', price: 45, properties: { damage: 0, armor: 5 } },
                         { name: 'Mail', slot: 'torso', price: 60, properties: { damage: 0, armor: 6 } },
-                        { name: 'Horse', slot: 'none', price: 300, properties: { damage: 0, armor: 0 } }
+                        { name: 'Horse', slot: 'none', price: 300, properties: { damage: 0, armor: 0 } },
+                        { name: 'Axe', slot: 'main hand', price: 28, properties: { damage: 11, armor: 0 } }
                     ];
                     shopItems = getRandomShopItems(allItems, 10);
                     enemyTemplates = [

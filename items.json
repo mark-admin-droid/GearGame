@@ -88,5 +88,11 @@
     "slot": "none",
     "price": 300,
     "properties": { "damage": 0, "armor": 0 }
+  },
+  {
+    "name": "Axe",
+    "slot": "main hand",
+    "price": 28,
+    "properties": { "damage": 11, "armor": 0 }
   }
 ]
