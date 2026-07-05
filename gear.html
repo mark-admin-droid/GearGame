@@ -271,6 +271,10 @@
             background: #d97706;
         }
 
+        #druidHouseButton {
+            background: #8b5a2b;
+        }
+
         .fleeButton {
             margin-top: 10px;
             padding: 6px 10px;
@@ -332,7 +336,7 @@
     </div>
 
     <div id="battleScreen" class="battleScreen screenCard">
-        <h2>Adventure</h2>
+        <h2 id="adventureTitle">Adventure</h2>
         <div id="battleInfo"></div>
         <div id="battlePanels" class="battlePanels">
             <div id="heroBattlePanel" class="battlePanel heroPanel"></div>
@@ -343,6 +347,7 @@
         <button id="fleeButton" class="fleeButton" onclick="heroFlee()" style="display:none;">Flee</button>
         <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
+        <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
         <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
         <div id="battleGrid" class="battleGrid"></div>
         <div id="eventLog" class="eventLog"></div>
@@ -351,6 +356,8 @@
     <div id="deathScreen" class="deathScreen screenCard">
         <h2>The End</h2>
         <div id="deathSummary" class="deathSummary"></div>
+        <h3>Battle Log</h3>
+        <div id="deathLog" class="eventLog"></div>
         <button id="deathRestartButton" class="startButton gameButton" onclick="restartAfterDeath()">Start a New Game</button>
     </div>
 
@@ -388,6 +395,8 @@
         var eventLog = [];
         var enemiesKilled = 0;
         var goldAcquired = 0;
+        var currentDay = 1;
+        var druidHealDay = 0;
         var survivalEnemyCount = 3;
         var pendingShopSurvivalAdvance = false;
         var pendingShopEnemyCount = 0;
@@ -450,6 +459,7 @@
             document.getElementById('battleScreen').style.display = 'none';
             document.getElementById('backToAdventureButton').style.display = 'none';
             document.getElementById('deathSummary').textContent = getEndGameMessage();
+            document.getElementById('deathLog').innerHTML = document.getElementById('eventLog').innerHTML;
             document.getElementById('deathScreen').style.display = 'block';
         }
 
@@ -485,6 +495,8 @@
             eventLog = [];
             enemiesKilled = 0;
             goldAcquired = 0;
+            currentDay = 1;
+            druidHealDay = 0;
             survivalEnemyCount = 3;
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
@@ -494,6 +506,7 @@
             document.getElementById('battleInfo').textContent = '';
             document.getElementById('battleStats').textContent = '';
             document.getElementById('eventLog').innerHTML = '';
+            document.getElementById('deathLog').innerHTML = '';
             showBattleActions(false);
 
             if (allItems && allItems.length > 0) {
@@ -833,13 +846,24 @@
         function advanceSurvivalWave() {
             var nextEnemyCount = pendingShopEnemyCount + 1;
             survivalEnemyCount = nextEnemyCount;
+            currentDay += 1;
             spawnEnemyWave(nextEnemyCount);
-            addEvent('The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land.');
+            addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land.');
+            updateAdventureTitle();
         }
 
         function getEndGameMessage() {
             var message = endGameMessages[Math.floor(Math.random() * endGameMessages.length)];
-            return message.replace('{x}', enemiesKilled).replace('{y}', goldAcquired);
+            var daysText = currentDay === 1 ? '1 day' : currentDay + ' days';
+            return message.replace('{x}', enemiesKilled).replace('{y}', goldAcquired) + ' You survived ' + daysText + '.';
+        }
+
+        function updateAdventureTitle() {
+            var adventureTitle = document.getElementById('adventureTitle');
+            if (!adventureTitle) {
+                return;
+            }
+            adventureTitle.textContent = 'Adventure. Day ' + currentDay + '.';
         }
 
         function isSameCell(a, b) {
@@ -848,6 +872,10 @@
 
         function isWithinOneCell(a, b) {
             return Math.abs(a.x - b.x) <= 1 && Math.abs(a.y - b.y) <= 1;
+        }
+
+        function isDirectlyAdjacent(a, b) {
+            return Math.abs(a.x - b.x) + Math.abs(a.y - b.y) === 1;
         }
 
         function getEnemyMovementOptions(pos) {
@@ -1024,13 +1052,47 @@
             return false;
         }
 
+        function getAdjacentDruidHouseCell(pos) {
+            for (var i = 0; i < druidHouseCells.length; i++) {
+                if (isDirectlyAdjacent(pos, druidHouseCells[i])) {
+                    return druidHouseCells[i];
+                }
+            }
+            return null;
+        }
+
+        function canUseDruidHouseToday() {
+            return druidHealDay !== currentDay;
+        }
+
         function visitDruidHouse() {
+            if (!canUseDruidHouseToday()) {
+                addEvent('The druid house is closed to you for today. Return tomorrow.');
+                renderBattle();
+                return false;
+            }
+
             addEvent('Hero enters the druid house and is touched by green energy.');
-            var healAmount = 10;
+            var healAmount = 5;
             var oldHealth = heroStats.currentHealth;
             heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + healAmount);
+            druidHealDay = currentDay;
             addEvent('Druid heals hero for ' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ')');
             renderBattle();
+            return true;
+        }
+
+        function enterDruidHouse() {
+            if (gameOver || battleActive) {
+                return;
+            }
+
+            var nearbyDruidHouse = getAdjacentDruidHouseCell(heroPos);
+            if (!nearbyDruidHouse) {
+                return;
+            }
+
+            visitDruidHouse();
         }
 
         function visitTreasure(pos) {
@@ -1433,8 +1495,11 @@
             var attackButton = document.getElementById('attackButton');
             var fleeButton = document.getElementById('fleeButton');
             var shopButton = document.getElementById('shopButton');
+            var druidHouseButton = document.getElementById('druidHouseButton');
             var treasureButton = document.getElementById('treasureButton');
             var onShop = isWithinOneCell(heroPos, shopPos);
+            var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !battleActive && !gameOver;
+            var canUseDruid = canUseDruidHouseToday();
             var onTreasure = !!getNearbyTreasure(heroPos) && !battleActive && !gameOver;
 
             if (gameOver) {
@@ -1442,6 +1507,7 @@
                 attackButton.style.display = 'none';
                 fleeButton.style.display = 'none';
                 shopButton.style.display = 'none';
+                druidHouseButton.style.display = 'none';
                 treasureButton.style.display = 'none';
                 showBattleMap(false);
             } else if (battleActive) {
@@ -1450,10 +1516,12 @@
                 attackButton.textContent = 'Attack';
                 fleeButton.style.display = 'inline-block';
                 shopButton.style.display = 'none';
+                druidHouseButton.style.display = 'none';
                 treasureButton.style.display = 'none';
                 showBattleMap(false);
             } else {
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
+                druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
                 treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
 
                 if (nearbyEnemy) {
@@ -1464,6 +1532,11 @@
                     showBattleMap(true);
                 } else if (onShop) {
                     battleInfo.textContent = 'You are at the shop. Enter to browse gear.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    showBattleMap(true);
+                } else if (onDruidHouse) {
+                    battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 5 HP.' : 'The druid house already healed you today. Return tomorrow.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -1560,9 +1633,12 @@
             enemies = [];
             enemiesKilled = 0;
             goldAcquired = 0;
+            currentDay = 1;
+            druidHealDay = 0;
             survivalEnemyCount = 3;
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
+            updateAdventureTitle();
             var blockedCells = [heroPos];
 
             for (var i = 0; i < survivalEnemyCount; i++) {

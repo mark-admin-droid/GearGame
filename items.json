@@ -2,38 +2,38 @@
   {
     "name": "Sword",
     "slot": "main hand",
-    "price": 20,
+    "price": 30,
     "properties": { "damage": 12, "armor": 0 }
   },
   {
     "name": "Shield",
     "slot": "off-hand",
     "price": 15,
-    "properties": { "damage": 0, "armor": 3 }
+    "properties": { "damage": 0, "armor": 5 }
   },
   {
     "name": "Longbow",
     "slot": "main hand/off-hand",
-    "price": 25,
+    "price": 20,
     "properties": { "damage": 10, "armor": 0 }
   },
   {
     "name": "Helmet",
     "slot": "head",
     "price": 10,
-    "properties": { "damage": 0, "armor": 2 }
+    "properties": { "damage": 0, "armor": 3 }
   },
   {
     "name": "Belt",
     "slot": "torso",
-    "price": 8,
+    "price": 10,
     "properties": { "damage": 0, "armor": 2 }
   },
   {
     "name": "Plate Armor",
     "slot": "torso",
     "price": 150,
-    "properties": { "damage": 0, "armor": 8 }
+    "properties": { "damage": 0, "armor": 10 }
   },
   {
     "name": "Cloak",
@@ -62,8 +62,8 @@
   {
     "name": "Dagger",
     "slot": "main hand",
-    "price": 12,
-    "properties": { "damage": 6, "armor": 0 }
+    "price": 7,
+    "properties": { "damage": 5, "armor": 0 }
   },
   {
     "name": "Rusty Sword",
@@ -81,7 +81,7 @@
     "name": "Mail",
     "slot": "torso",
     "price": 60,
-    "properties": { "damage": 0, "armor": 6 }
+    "properties": { "damage": 0, "armor": 8 }
   },
   {
     "name": "Horse",
