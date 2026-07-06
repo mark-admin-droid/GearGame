@@ -1,5 +1,7 @@
 {
   "name": "Hero",
+  "startingGold": 50,
+  "startingSurvivalEnemyCount": 3,
   "healthPoints": 30,
   "baseDamage": 3,
   "baseArmor": 0

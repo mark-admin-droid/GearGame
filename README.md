@@ -1,1 +1,3 @@
-Visit https://mark-admin-droid.github.io/GearGame/gear.html to play the game
+Small turn-based survival RPG: gear up, fight scaling enemies, gather resources, and survive each day.
+
+Play: https://mark-admin-droid.github.io/GearGame/index.html

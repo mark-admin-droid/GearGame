@@ -116,6 +116,11 @@
             font-weight: bold;
         }
 
+        .heroLogName {
+            color: #2e9e44;
+            font-weight: bold;
+        }
+
         ul {
             list-style: none;
             padding: 0;
@@ -137,6 +142,16 @@
             gap: 8px;
             align-items: center;
             margin-bottom: 8px;
+            text-align: left;
+        }
+
+        .shopItemInfo {
+            text-align: left;
+        }
+
+        .itemStatsSmall {
+            font-size: 11px;
+            color: #555;
         }
 
         #inventoryList li {
@@ -624,11 +639,14 @@
     <script>
         var shopItems = [];
         var inventory = [];
-        var gold = 50;
+        var gold = 0;
         var mapSize = 20;
         var caveSize = 8;
         var initialTreeCount = 15;
         var dailyTreeGrowth = 3;
+        var startingGold = 0;
+        var startingSurvivalEnemyCount = 0;
+        var isGameDataLoaded = false;
         var hasHorse = false;
         var horseCount = 0;
         var equippedItems = {
@@ -638,10 +656,10 @@
             offHand: null
         };
         var heroStats = {
-            name: 'Hero',
-            healthPoints: 30,
-            currentHealth: 30,
-            baseDamage: 3,
+            name: '',
+            healthPoints: 0,
+            currentHealth: 0,
+            baseDamage: 0,
             baseArmor: 0
         };
         var heroPos = { x: 0, y: 0 };
@@ -670,7 +688,7 @@
         var goldAcquired = 0;
         var currentDay = 1;
         var druidHealDay = 0;
-        var survivalEnemyCount = 3;
+        var survivalEnemyCount = 0;
         var pendingShopSurvivalAdvance = false;
         var pendingShopEnemyCount = 0;
         var isShopOpen = true;
@@ -689,16 +707,35 @@
         ];
 
         function showStartScreen() {
+            var startButton = document.getElementById('startButton');
+            var welcomeMessage = document.getElementById('welcomeMessage');
+
             document.getElementById('startScreen').style.display = 'block';
             document.getElementById('pageTitle').style.display = 'none';
             document.getElementById('adventureButton').style.display = 'none';
             document.getElementById('mainView').style.display = 'none';
             document.getElementById('battleScreen').style.display = 'none';
             document.getElementById('deathScreen').style.display = 'none';
-            document.getElementById('welcomeMessage').textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+
+            if (!isGameDataLoaded) {
+                startButton.disabled = true;
+                startButton.textContent = 'Loading...';
+                if (!welcomeMessage.textContent) {
+                    welcomeMessage.textContent = 'Loading game data from JSON files...';
+                }
+                return;
+            }
+
+            startButton.disabled = false;
+            startButton.textContent = 'Start';
+            welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
         }
 
         function startGameFromWelcome() {
+            if (!isGameDataLoaded) {
+                return;
+            }
+
             var mainView = document.getElementById('mainView');
             var shopBox = mainView.querySelector('.container .box:first-child');
             var inventoryBox = mainView.querySelector('.container .box:last-child');
@@ -742,7 +779,13 @@
         }
 
         function resetForNewGame() {
-            gold = 50;
+            if (!isGameDataLoaded) {
+                loadItems();
+                showStartScreen();
+                return;
+            }
+
+            gold = startingGold;
             inventory = [];
             horseCount = 0;
             updateHorseState();
@@ -779,7 +822,7 @@
             goldAcquired = 0;
             currentDay = 1;
             druidHealDay = 0;
-            survivalEnemyCount = 3;
+            survivalEnemyCount = startingSurvivalEnemyCount;
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
             isShopOpen = true;
@@ -791,13 +834,9 @@
             document.getElementById('deathLog').innerHTML = '';
             showBattleActions(false);
 
-            if (allItems && allItems.length > 0) {
-                shopItems = getRandomShopItems(allItems, 10);
-                showShop();
-                showInventory();
-            } else {
-                loadItems();
-            }
+            shopItems = getRandomShopItems(allItems, 10);
+            showShop();
+            showInventory();
         }
 
         function handleHeroDeath() {
@@ -844,14 +883,14 @@
             var text = '';
 
             if (item.properties.damage > 0) {
-                text += 'Dmg ' + item.properties.damage;
+                text += 'Damage ' + item.properties.damage;
             }
 
             if (item.properties.armor > 0) {
                 if (text !== '') {
                     text += ' / ';
                 }
-                text += 'Arm ' + item.properties.armor;
+                text += 'Armour ' + item.properties.armor;
             }
 
             return text;
@@ -864,7 +903,7 @@
             for (var i = 0; i < shopItems.length; i++) {
                 var item = shopItems[i];
                 var li = document.createElement('li');
-                li.innerHTML = '<span><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br>' + getItemStatsText(item) + '</span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
+                li.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br><span class="itemStatsSmall">' + getItemStatsText(item) + '</span></span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
                 shopList.appendChild(li);
             }
         }
@@ -1045,14 +1084,92 @@
             return enemy.name.charAt(0).toUpperCase();
         }
 
-        function getEnemyLootItem() {
+        function getEnemyDisplayName(enemy) {
+            if (!enemy || !enemy.name) {
+                return 'Enemy';
+            }
+
+            var level = typeof enemy.level === 'number' ? enemy.level : 1;
+            return 'Level ' + level + ' ' + enemy.name;
+        }
+
+        function getEnemyMapColor(level) {
+            var safeLevel = Math.max(1, typeof level === 'number' ? level : 1);
+            var lightness = Math.max(34, 86 - (safeLevel - 1) * 5);
+            return 'hsl(0, 70%, ' + lightness + '%)';
+        }
+
+        function getEnemyMapTextColor(level) {
+            var safeLevel = Math.max(1, typeof level === 'number' ? level : 1);
+            var lightness = Math.max(34, 86 - (safeLevel - 1) * 5);
+            return lightness <= 56 ? '#fff' : '#4d0f0f';
+        }
+
+        function getScaledStat(baseValue, increasePerLevel, level, minimum) {
+            var minValue = typeof minimum === 'number' ? minimum : 0;
+            var safeBase = typeof baseValue === 'number' ? baseValue : minValue;
+            var safeIncrease = typeof increasePerLevel === 'number' && increasePerLevel > 0 ? increasePerLevel : 1;
+            var safeLevel = Math.max(1, typeof level === 'number' ? level : 1);
+            return Math.max(minValue, Math.round(safeBase * Math.pow(safeIncrease, safeLevel - 1)));
+        }
+
+        function getEnemyLevelForCurrentDay(template) {
+            var baseLevel = 1;
+            if (template && typeof template.baseLevel === 'number') {
+                baseLevel = Math.max(1, Math.floor(template.baseLevel));
+            }
+            var maxLevel = Math.max(1, currentDay);
+            var minLevel = Math.min(baseLevel, maxLevel);
+            return minLevel + Math.floor(Math.random() * (maxLevel - minLevel + 1));
+        }
+
+        function getEnemyGoldDrop(template, level) {
+            if (!template) {
+                return 0;
+            }
+
+            var baseDrop = typeof template.dropsGold === 'number' ? template.dropsGold : 0;
+            var increasePerLevel = typeof template.goldIncreasePerLevel === 'number' ? template.goldIncreasePerLevel : 1;
+            return getScaledStat(baseDrop, increasePerLevel, level, 0);
+        }
+
+        function getRandomEnemyEquipment(kind) {
             if (!allItems || allItems.length === 0) {
                 return null;
             }
-            if (Math.random() < 0.35) {
+
+            var candidates = [];
+            var propertyName = kind === 'weapon' ? 'damage' : 'armor';
+
+            for (var i = 0; i < allItems.length; i++) {
+                var item = allItems[i];
+                if (!item || !item.properties) {
+                    continue;
+                }
+
+                var value = item.properties[propertyName];
+                if (typeof value !== 'number' || value <= 0) {
+                    continue;
+                }
+
+                if (kind === 'weapon') {
+                    if (item.slot !== 'main hand' && item.slot !== 'main hand/off-hand') {
+                        continue;
+                    }
+                } else if (kind === 'armor') {
+                    if (item.slot !== 'off-hand' && item.slot !== 'head' && item.slot !== 'torso' && item.slot !== 'main hand/off-hand') {
+                        continue;
+                    }
+                }
+
+                candidates.push(item);
+            }
+
+            if (candidates.length === 0) {
                 return null;
             }
-            return allItems[Math.floor(Math.random() * allItems.length)];
+
+            return candidates[Math.floor(Math.random() * candidates.length)];
         }
 
         function getRandomShopItems(items, count) {
@@ -1191,19 +1308,50 @@
                 }
             }
 
-            var template = enemyTemplates[Math.floor(Math.random() * enemyTemplates.length)];
-            var lootItem = getEnemyLootItem();
+            var availableTemplates = enemyTemplates.filter(function(enemyTemplate) {
+                var templateBaseLevel = typeof enemyTemplate.baseLevel === 'number' ? Math.max(1, Math.floor(enemyTemplate.baseLevel)) : 1;
+                return templateBaseLevel <= currentDay;
+            });
+            if (availableTemplates.length === 0) {
+                availableTemplates = enemyTemplates.slice();
+            }
+
+            var template = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
+            var level = getEnemyLevelForCurrentDay(template);
+            var healthIncreasePerLevel = typeof template.healthIncreasePerLevel === 'number' ? template.healthIncreasePerLevel : 1;
+            var damageIncreasePerLevel = typeof template.damageIncreasePerLevel === 'number' ? template.damageIncreasePerLevel : 1;
+            var armorIncreasePerLevel = typeof template.armorIncreasePerLevel === 'number' ? template.armorIncreasePerLevel : 1;
+            var canHaveWeaponFromLevel = typeof template.canHaveWeaponFromLevel === 'number' ? template.canHaveWeaponFromLevel : Number.MAX_SAFE_INTEGER;
+            var chanceOfHavingWeapon = typeof template.chanceOfHavingWeapon === 'number' ? template.chanceOfHavingWeapon : 0;
+            var canHaveArmorFromLevel = typeof template.canHaveArmorFromLevel === 'number' ? template.canHaveArmorFromLevel : Number.MAX_SAFE_INTEGER;
+            var chanceOfHavingArmor = typeof template.chanceOfHavingArmor === 'number' ? template.chanceOfHavingArmor : 0;
+            var equippedWeapon = null;
+            var equippedArmor = null;
+
+            if (level >= canHaveWeaponFromLevel && Math.random() < chanceOfHavingWeapon) {
+                equippedWeapon = getRandomEnemyEquipment('weapon');
+            }
+
+            if (level >= canHaveArmorFromLevel && Math.random() < chanceOfHavingArmor) {
+                equippedArmor = getRandomEnemyEquipment('armor');
+            }
+
             enemies.push({
                 name: template.name,
                 behaviour: template.behaviour,
-                healthPoints: template.healthPoints,
-                baseDamage: typeof template.baseDamage === 'number' ? template.baseDamage : 5,
-                baseArmor: typeof template.baseArmor === 'number' ? template.baseArmor : 0,
+                level: level,
+                healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, level, 1),
+                baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, level, 0),
+                baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, level, 0),
+                dropsGold: getEnemyGoldDrop(template, level),
                 pos: enemyPos,
                 alive: true,
-                lootItem: lootItem
+                equippedWeapon: equippedWeapon,
+                equippedArmor: equippedArmor
             });
-            addEvent('A new ' + template.name + ' has appeared on the map.');
+
+            var spawnedEnemy = enemies[enemies.length - 1];
+            addEvent('A new ' + getEnemyDisplayName(spawnedEnemy) + ' has appeared on the map.');
         }
 
         function spawnEnemyWave(count) {
@@ -1759,7 +1907,7 @@
             shopButton.style.display = onShop ? 'inline-block' : 'none';
             druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
             chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
-            buildButton.style.display = 'inline-block';
+            buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
             buildButton.disabled = !logCells || logCells.length === 0;
             caveButton.style.display = onCave || inCave ? 'inline-block' : 'none';
             caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
@@ -1775,7 +1923,7 @@
             } else if (onShop) {
                 battleInfo.textContent = 'You are at the shop. Enter to browse gear.';
             } else if (onDruidHouse) {
-                battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 5 HP.' : 'The druid house already healed you today. Return tomorrow.';
+                battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 50% of max HP.' : 'The druid house already healed you today. Return tomorrow.';
             } else if (onTreeWithAxe) {
                 battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
             } else if (onCave) {
@@ -1881,7 +2029,7 @@
             }
 
             addEvent('Hero enters the druid house and is touched by green energy.');
-            var healAmount = 5;
+            var healAmount = Math.max(1, Math.round(heroStats.healthPoints * 0.5));
             var oldHealth = heroStats.currentHealth;
             heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + healAmount);
             druidHealDay = currentDay;
@@ -1940,6 +2088,10 @@
                         formatted = formatted.replace(new RegExp('\\b' + escapeRegex(enemyName) + '\\b', 'g'), '<span class="enemyLogName">' + enemyName + '</span>');
                     }
                 }
+            }
+
+            if (heroStats && heroStats.name && formatted.indexOf(heroStats.name) !== -1) {
+                formatted = formatted.replace(new RegExp('\\b' + escapeRegex(heroStats.name) + '\\b', 'g'), '<span class="heroLogName">' + heroStats.name + '</span>');
             }
 
             if (allItems && allItems.length > 0) {
@@ -2035,8 +2187,8 @@
                 baseDamage = enemy.baseDamage;
             }
 
-            if (enemy.lootItem && enemy.lootItem.properties && enemy.lootItem.properties.damage) {
-                baseDamage = baseDamage + enemy.lootItem.properties.damage;
+            if (enemy.equippedWeapon && enemy.equippedWeapon.properties && enemy.equippedWeapon.properties.damage) {
+                baseDamage = baseDamage + enemy.equippedWeapon.properties.damage;
             }
 
             return baseDamage;
@@ -2049,8 +2201,8 @@
                 armor += enemy.baseArmor;
             }
 
-            if (enemy && enemy.lootItem && enemy.lootItem.properties && enemy.lootItem.properties.armor) {
-                armor += enemy.lootItem.properties.armor;
+            if (enemy && enemy.equippedArmor && enemy.equippedArmor.properties && enemy.equippedArmor.properties.armor) {
+                armor += enemy.equippedArmor.properties.armor;
             }
 
             return armor;
@@ -2105,32 +2257,42 @@
                 return;
             }
 
-            var heroDamage = Math.max(0, getHeroDamage() - getEnemyArmor(currentEnemy));
+            var heroAttackPower = getHeroDamage();
+            var enemyArmor = getEnemyArmor(currentEnemy);
+            var heroDamage = Math.max(0, heroAttackPower - enemyArmor);
             var oldEnemyHealth = enemyCurrentHealth;
             enemyCurrentHealth = Math.max(0, enemyCurrentHealth - heroDamage);
-            addEvent('Hero attacks for ' + heroDamage + ' damage (' + currentEnemy.name + ' HP ' + oldEnemyHealth + ' -> ' + enemyCurrentHealth + ')');
+            addEvent('Hero attacks for ' + heroDamage + ' damage (' + getEnemyDisplayName(currentEnemy) + ' armor ' + enemyArmor + ' reduces ' + heroAttackPower + ' to ' + heroDamage + ', HP ' + oldEnemyHealth + ' -> ' + enemyCurrentHealth + ')');
 
             if (enemyCurrentHealth <= 0) {
-                addEvent(currentEnemy.name + ' is defeated!');
+                addEvent(getEnemyDisplayName(currentEnemy) + ' is defeated!');
 
-                var reward = Math.floor(Math.random() * 6);
+                var reward = typeof currentEnemy.dropsGold === 'number' ? currentEnemy.dropsGold : 0;
 
                 if (reward > 0) {
                     gold += reward;
                     goldAcquired += reward;
-                    addEvent('Hero gains ' + reward + ' coins for defeating ' + currentEnemy.name + ' (gold ' + (gold - reward) + ' -> ' + gold + ')');
+                    addEvent('Hero gains ' + reward + ' coins for defeating ' + getEnemyDisplayName(currentEnemy) + ' (gold ' + (gold - reward) + ' -> ' + gold + ')');
                 } else {
-                    addEvent(currentEnemy.name + ' drops no coins.');
+                    addEvent(getEnemyDisplayName(currentEnemy) + ' drops no coins.');
                 }
 
-                if (currentEnemy.lootItem) {
-                    var lootItem = currentEnemy.lootItem;
+                var droppedItems = [];
+                if (currentEnemy.equippedWeapon) {
+                    droppedItems.push(currentEnemy.equippedWeapon);
+                }
+                if (currentEnemy.equippedArmor) {
+                    droppedItems.push(currentEnemy.equippedArmor);
+                }
+
+                for (var d = 0; d < droppedItems.length; d++) {
+                    var lootItem = droppedItems[d];
                     inventory.push({ name: lootItem.name, price: lootItem.price, slot: lootItem.slot, properties: lootItem.properties });
                     if (lootItem.name === 'Horse') {
                         horseCount += 1;
                         updateHorseState();
                     }
-                    addEvent('Hero loots ' + lootItem.name + ' from ' + currentEnemy.name + ' and adds it to the inventory');
+                    addEvent('Hero loots ' + lootItem.name + ' from ' + getEnemyDisplayName(currentEnemy) + ' and adds it to the inventory');
                 }
 
                 enemiesKilled += 1;
@@ -2144,10 +2306,16 @@
                 return;
             }
 
-            var enemyDamage = Math.max(0, getEnemyDamage(currentEnemy) - getHeroArmor());
+            var enemyAttackPower = getEnemyDamage(currentEnemy);
+            var heroArmor = getHeroArmor();
+            var enemyDamage = Math.max(0, enemyAttackPower - heroArmor);
             var oldHeroHealth = heroStats.currentHealth;
             heroStats.currentHealth = Math.max(0, heroStats.currentHealth - enemyDamage);
-            addEvent('Enemy attacks for ' + enemyDamage + ' damage (' + heroStats.name + ' armor ' + getHeroArmor() + ' reduces to ' + enemyDamage + ', HP ' + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+            if (enemyDamage === 0) {
+                addEvent(getEnemyDisplayName(currentEnemy) + ' attacks but ' + heroStats.name + "'s armor deflects all damage (HP " + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+            } else {
+                addEvent(getEnemyDisplayName(currentEnemy) + ' attacks for ' + enemyDamage + ' damage (' + heroStats.name + ' armor ' + heroArmor + ' reduces ' + enemyAttackPower + ' to ' + enemyDamage + ', HP ' + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+            }
 
             if (heroStats.currentHealth <= 0) {
                 handleHeroDeath();
@@ -2162,7 +2330,7 @@
                 return;
             }
 
-            addEvent('Hero flees from ' + currentEnemy.name + '!');
+            addEvent('Hero flees from ' + getEnemyDisplayName(currentEnemy) + '!');
             battleActive = false;
             currentEnemy = null;
             enemyCurrentHealth = 0;
@@ -2229,7 +2397,7 @@
                 currentEnemy = enemyOnTile;
                 enemyCurrentHealth = enemyOnTile.healthPoints;
                 battleActive = true;
-                addEvent('Turn ' + turnNumber + '. Clash has begun against ' + enemyOnTile.name);
+                addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyOnTile));
             } else if (moveEnemies()) {
                 return;
             } else if (isSameCell(heroPos, shopPos)) {
@@ -2263,7 +2431,7 @@
             currentEnemy = enemyToBattle;
             enemyCurrentHealth = enemyToBattle.healthPoints;
             battleActive = true;
-            addEvent('Turn ' + turnNumber + '. Clash has begun against ' + enemyToBattle.name);
+            addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyToBattle));
             showBattleActions(true);
             renderBattle();
         }
@@ -2326,6 +2494,8 @@
                         if (enemyAtCell) {
                             cell.textContent = getEnemyDisplayLetter(enemyAtCell);
                             cell.classList.add('enemy');
+                            cell.style.backgroundColor = getEnemyMapColor(enemyAtCell.level);
+                            cell.style.color = getEnemyMapTextColor(enemyAtCell.level);
                         } else {
                             var adjacent = getAdjacentCells(heroPos);
                             var moved = false;
@@ -2356,8 +2526,8 @@
 
             if (battleActive && currentEnemy) {
                 enemyBattlePanel.style.display = 'block';
-                enemyBattlePanel.innerHTML = '<strong>' + currentEnemy.name + '</strong><br>HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints + '<br>Damage ' + getEnemyDamage(currentEnemy) + '<br>Armor ' + getEnemyArmor(currentEnemy);
-                battleStats.innerHTML = '<strong>Enemy:</strong> ' + currentEnemy.name + ' HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints;
+                enemyBattlePanel.innerHTML = '<strong>' + getEnemyDisplayName(currentEnemy) + '</strong><br>HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints + '<br>Damage ' + getEnemyDamage(currentEnemy) + '<br>Armor ' + getEnemyArmor(currentEnemy);
+                battleStats.innerHTML = '<strong>Enemy:</strong> ' + getEnemyDisplayName(currentEnemy) + ' HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints;
             } else {
                 enemyBattlePanel.style.display = 'none';
                 enemyBattlePanel.innerHTML = '';
@@ -2431,9 +2601,9 @@
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
                 druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
                 chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
-                buildButton.style.display = 'inline-block';
+                buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
                 buildButton.disabled = !logCells || logCells.length === 0;
-                stoneBuildButton.style.display = inCave ? 'none' : 'inline-block';
+                stoneBuildButton.style.display = inCave ? 'none' : (minedRockItems && minedRockItems.length > 0 ? 'inline-block' : 'none');
                 stoneBuildButton.disabled = !minedRockItems || minedRockItems.length === 0;
                 caveButton.style.display = onCave || inCave ? 'inline-block' : 'none';
                 caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
@@ -2493,7 +2663,7 @@
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
                 } else if (onDruidHouse) {
-                    battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 5 HP.' : 'The druid house already healed you today. Return tomorrow.';
+                    battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 50% of max HP.' : 'The druid house already healed you today. Return tomorrow.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -2574,6 +2744,10 @@
             }
 
             if (pendingShopSurvivalAdvance && getAliveEnemyCount() === 0) {
+                var overnightHeal = Math.max(1, Math.round(heroStats.healthPoints * 0.1));
+                var oldHealth = heroStats.currentHealth;
+                heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + overnightHeal);
+                addEvent('Hero stayed overnight in the shop and recovered ' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ')');
                 advanceSurvivalWave();
             }
             pendingShopSurvivalAdvance = false;
@@ -2608,40 +2782,17 @@
             goldAcquired = 0;
             currentDay = 1;
             druidHealDay = 0;
-            survivalEnemyCount = 3;
+            survivalEnemyCount = startingSurvivalEnemyCount;
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
             updateAdventureTitle();
             var blockedCells = [heroPos].concat(caveCells);
 
-            for (var i = 0; i < survivalEnemyCount; i++) {
-                var enemyPos = getRandomCell();
-                var isBlocked = false;
-
-                while (!isBlocked) {
-                    isBlocked = true;
-                    for (var b = 0; b < blockedCells.length; b++) {
-                        if (blockedCells[b].x === enemyPos.x && blockedCells[b].y === enemyPos.y) {
-                            enemyPos = getRandomCell();
-                            isBlocked = false;
-                            break;
-                        }
-                    }
+            spawnEnemyWave(survivalEnemyCount);
+            for (var i = 0; i < enemies.length; i++) {
+                if (enemies[i] && enemies[i].alive) {
+                    blockedCells.push(enemies[i].pos);
                 }
-
-                blockedCells.push(enemyPos);
-                var template = enemyTemplates[Math.floor(Math.random() * enemyTemplates.length)];
-                var lootItem = getEnemyLootItem();
-                enemies.push({
-                    name: template.name,
-                    behaviour: template.behaviour,
-                    healthPoints: template.healthPoints,
-                    baseDamage: typeof template.baseDamage === 'number' ? template.baseDamage : 5,
-                    baseArmor: typeof template.baseArmor === 'number' ? template.baseArmor : 0,
-                    pos: enemyPos,
-                    alive: true,
-                    lootItem: lootItem
-                });
             }
 
             var shopCell = getRandomCell();
@@ -2721,58 +2872,95 @@
         }
 
         function loadItems() {
+            isGameDataLoaded = false;
             Promise.all([
                 fetch('items.json').then(function(response) { return response.json(); }),
                 fetch('enemies.json').then(function(response) { return response.json(); }),
                 fetch('hero.json').then(function(response) { return response.json(); })
             ])
                 .then(function(results) {
-                    allItems = results[0] || [];
+                    var loadedItems = results[0] || [];
                     var allEnemies = results[1] || [];
                     var heroConfig = results[2] || {};
+
+                    if (!Array.isArray(loadedItems) || loadedItems.length === 0) {
+                        throw new Error('items.json is empty or invalid.');
+                    }
+                    if (!Array.isArray(allEnemies) || allEnemies.length === 0) {
+                        throw new Error('enemies.json is empty or invalid.');
+                    }
+                    if (!heroConfig || typeof heroConfig !== 'object') {
+                        throw new Error('hero.json is invalid.');
+                    }
+                    if (typeof heroConfig.name !== 'string' || heroConfig.name.length === 0) {
+                        throw new Error('hero.json is missing a valid name.');
+                    }
+                    if (typeof heroConfig.healthPoints !== 'number' || heroConfig.healthPoints <= 0) {
+                        throw new Error('hero.json is missing a valid healthPoints value.');
+                    }
+                    if (typeof heroConfig.baseDamage !== 'number' || heroConfig.baseDamage < 0) {
+                        throw new Error('hero.json is missing a valid baseDamage value.');
+                    }
+                    if (typeof heroConfig.baseArmor !== 'number' || heroConfig.baseArmor < 0) {
+                        throw new Error('hero.json is missing a valid baseArmor value.');
+                    }
+                    if (typeof heroConfig.startingGold !== 'number' || heroConfig.startingGold < 0) {
+                        throw new Error('hero.json is missing a valid startingGold value.');
+                    }
+                    if (typeof heroConfig.startingSurvivalEnemyCount !== 'number' || heroConfig.startingSurvivalEnemyCount < 1) {
+                        throw new Error('hero.json is missing a valid startingSurvivalEnemyCount value.');
+                    }
+
+                    allItems = loadedItems;
+                    startingGold = heroConfig.startingGold;
+                    startingSurvivalEnemyCount = Math.floor(heroConfig.startingSurvivalEnemyCount);
+                    survivalEnemyCount = startingSurvivalEnemyCount;
 
                     shopItems = getRandomShopItems(allItems, 10);
 
                     enemyTemplates = allEnemies;
-                    heroStats.name = heroConfig.name || heroStats.name;
-                    heroStats.healthPoints = typeof heroConfig.healthPoints === 'number' ? heroConfig.healthPoints : heroStats.healthPoints;
-                    heroStats.baseDamage = typeof heroConfig.baseDamage === 'number' ? heroConfig.baseDamage : heroStats.baseDamage;
-                    heroStats.baseArmor = typeof heroConfig.baseArmor === 'number' ? heroConfig.baseArmor : heroStats.baseArmor;
+                    heroStats.name = heroConfig.name;
+                    heroStats.healthPoints = heroConfig.healthPoints;
+                    heroStats.baseDamage = heroConfig.baseDamage;
+                    heroStats.baseArmor = heroConfig.baseArmor;
                     heroStats.currentHealth = heroStats.healthPoints;
+
+                    gold = startingGold;
+                    isGameDataLoaded = true;
+
+                    var startButton = document.getElementById('startButton');
+                    var welcomeMessage = document.getElementById('welcomeMessage');
+                    if (startButton) {
+                        startButton.disabled = false;
+                        startButton.textContent = 'Start';
+                    }
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+                    }
+
                     showShop();
                     showInventory();
                 })
-                .catch(function() {
-                    allItems = [
-                        { name: 'Sword', slot: 'main hand', price: 20, properties: { damage: 12, armor: 0 } },
-                        { name: 'Shield', slot: 'off-hand', price: 15, properties: { damage: 0, armor: 1 } },
-                        { name: 'Longbow', slot: 'main hand/off-hand', price: 25, properties: { damage: 10, armor: 0 } },
-                        { name: 'Helmet', slot: 'head', price: 10, properties: { damage: 0, armor: 2 } },
-                        { name: 'Belt', slot: 'torso', price: 8, properties: { damage: 0, armor: 2 } },
-                        { name: 'Plate Armor', slot: 'torso', price: 150, properties: { damage: 0, armor: 8 } },
-                        { name: 'Cloak', slot: 'torso', price: 12, properties: { damage: 0, armor: 1 } },
-                        { name: 'Longsword', slot: 'main hand/off-hand', price: 35, properties: { damage: 18, armor: 0 } },
-                        { name: 'Spear', slot: 'main hand/off-hand', price: 30, properties: { damage: 14, armor: 0 } },
-                        { name: 'Club', slot: 'main hand', price: 8, properties: { damage: 4, armor: 0 } },
-                        { name: 'Dagger', slot: 'main hand', price: 12, properties: { damage: 6, armor: 0 } },
-                        { name: 'Rusty Sword', slot: 'main hand', price: 16, properties: { damage: 8, armor: 0 } },
-                        { name: 'Brigandine', slot: 'torso', price: 45, properties: { damage: 0, armor: 5 } },
-                        { name: 'Mail', slot: 'torso', price: 60, properties: { damage: 0, armor: 6 } },
-                        { name: 'Horse', slot: 'none', price: 300, properties: { damage: 0, armor: 0 } },
-                        { name: 'Axe', slot: 'main hand', price: 28, properties: { damage: 11, armor: 0 } },
-                        { name: 'Pickaxe', slot: 'main hand', price: 26, properties: { damage: 6, armor: 0 } }
-                    ];
-                    shopItems = getRandomShopItems(allItems, 10);
-                    enemyTemplates = [
-                        { name: 'Goblin', behaviour: 'active aggressive', healthPoints: 20, baseDamage: 5, baseArmor: 0 },
-                        { name: 'Slime', behaviour: 'passive aggressive', healthPoints: 15, baseDamage: 4, baseArmor: 1 },
-                        { name: 'Bandit', behaviour: 'neutral', healthPoints: 18, baseDamage: 6, baseArmor: 1 },
-                        { name: 'Troll', behaviour: 'wandering aggressive', healthPoints: 25, baseDamage: 10, baseArmor: 5 },
-                        { name: 'Wolf', behaviour: 'wandering aggressive', healthPoints: 16, baseDamage: 7, baseArmor: 0 },
-                        { name: 'Rat', behaviour: 'neutral', healthPoints: 10, baseDamage: 2, baseArmor: 0 }
-                    ];
-                    showShop();
-                    showInventory();
+                .catch(function(error) {
+                    isGameDataLoaded = false;
+                    allItems = [];
+                    enemyTemplates = [];
+                    shopItems = [];
+
+                    var startButton = document.getElementById('startButton');
+                    var welcomeMessage = document.getElementById('welcomeMessage');
+                    var warningMessage = document.getElementById('warningMessage');
+
+                    if (startButton) {
+                        startButton.disabled = true;
+                        startButton.textContent = 'Start';
+                    }
+                    if (welcomeMessage) {
+                        welcomeMessage.textContent = 'Could not load game data. Check items.json, enemies.json and hero.json.';
+                    }
+                    if (warningMessage) {
+                        warningMessage.textContent = 'Data load error: ' + (error && error.message ? error.message : 'Unknown error');
+                    }
                 });
         }
 
