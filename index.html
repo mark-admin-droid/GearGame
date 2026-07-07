@@ -606,6 +606,7 @@
         <button id="attackButton" class="attackButton" onclick="heroAttack()" style="display:none;">Fight</button>
         <button id="fleeButton" class="fleeButton" onclick="heroFlee()" style="display:none;">Flee</button>
         <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
+        <button id="drinkPotionQuickButton" class="attackButton" onclick="drinkHealthPotionQuick()" style="display:none;">Drink Health potion</button>
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
         <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
         <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
@@ -714,6 +715,7 @@
             baseDamage: 0,
             baseArmor: 0
         };
+        var lastKillingEnemy = null;
         var endGameMessages = [
             'You have lived the bright life of a hero, destroyed {x} enemies and hoarded {y} gold.',
             'The world still sings your name; you broke {x} foes and gathered {y} gold in your wake.',
@@ -758,6 +760,67 @@
                 return 0;
             }
             return Math.floor(item.price / 2);
+        }
+
+        function isHealthPotionItem(item) {
+            return !!(item && item.name === 'Health potion' && item.properties && typeof item.properties.healthPercentsRestores === 'number' && item.properties.healthPercentsRestores > 0);
+        }
+
+        function getHealthPotionRestoreAmount(item) {
+            if (!isHealthPotionItem(item)) {
+                return 0;
+            }
+
+            return Math.max(1, Math.round(heroStats.healthPoints * (item.properties.healthPercentsRestores / 100)));
+        }
+
+        function getFirstHealthPotionIndex() {
+            for (var i = 0; i < inventory.length; i++) {
+                if (isHealthPotionItem(inventory[i])) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        function drinkHealthPotionAt(index) {
+            if (gameOver) {
+                return false;
+            }
+
+            if (typeof index !== 'number' || index < 0 || index >= inventory.length) {
+                return false;
+            }
+
+            var potion = inventory[index];
+            if (!isHealthPotionItem(potion)) {
+                return false;
+            }
+
+            var restoreAmount = getHealthPotionRestoreAmount(potion);
+            var oldHealth = heroStats.currentHealth;
+            heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + restoreAmount);
+            inventory.splice(index, 1);
+            addEvent('Hero drinks Health potion and restores ' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ')');
+            showInventory();
+
+            if (!isShopOpen) {
+                renderBattle();
+            }
+
+            return true;
+        }
+
+        function drinkHealthPotion(index) {
+            drinkHealthPotionAt(index);
+        }
+
+        function drinkHealthPotionQuick() {
+            var potionIndex = getFirstHealthPotionIndex();
+            if (potionIndex === -1) {
+                return;
+            }
+            drinkHealthPotionAt(potionIndex);
         }
 
         function getNextLevelXp(level) {
@@ -841,7 +904,12 @@
             document.getElementById('mainView').style.display = 'none';
             document.getElementById('battleScreen').style.display = 'none';
             document.getElementById('backToAdventureButton').style.display = 'none';
-            document.getElementById('deathSummary').textContent = getEndGameMessage();
+            var summary = getEndGameMessage();
+            var killerMessage = getKillerMessage();
+            if (killerMessage) {
+                summary += ' ' + killerMessage;
+            }
+            document.getElementById('deathSummary').textContent = summary;
             document.getElementById('deathLog').innerHTML = document.getElementById('eventLog').innerHTML;
             document.getElementById('deathScreen').style.display = 'block';
         }
@@ -871,6 +939,7 @@
             };
 
             resetHeroProgress();
+            lastKillingEnemy = null;
             heroPos = { x: 0, y: 0 };
             shopPos = { x: 0, y: 0 };
             druidHouseCells = [];
@@ -912,9 +981,19 @@
             showInventory();
         }
 
-        function handleHeroDeath() {
+        function handleHeroDeath(killingEnemy) {
             if (gameOver) {
                 return;
+            }
+
+            lastKillingEnemy = null;
+            if (killingEnemy) {
+                lastKillingEnemy = {
+                    name: killingEnemy.name,
+                    level: killingEnemy.level,
+                    equippedWeapon: killingEnemy.equippedWeapon,
+                    equippedArmor: killingEnemy.equippedArmor
+                };
             }
 
             addEvent(heroStats.name + ' has fallen in battle');
@@ -924,6 +1003,31 @@
             enemyCurrentHealth = 0;
             showBattleActions(false);
             showDeathScreen();
+        }
+
+        function getKillerMessage() {
+            if (!lastKillingEnemy || !lastKillingEnemy.name) {
+                return '';
+            }
+
+            var level = typeof lastKillingEnemy.level === 'number' ? lastKillingEnemy.level : 1;
+            var sentence = 'Your life was ended by level ' + level + ' ' + lastKillingEnemy.name;
+            var equipmentParts = [];
+
+            if (lastKillingEnemy.equippedWeapon && lastKillingEnemy.equippedWeapon.name) {
+                equipmentParts.push('the ' + lastKillingEnemy.equippedWeapon.name);
+            }
+            if (lastKillingEnemy.equippedArmor && lastKillingEnemy.equippedArmor.name) {
+                equipmentParts.push('the ' + lastKillingEnemy.equippedArmor.name);
+            }
+
+            if (equipmentParts.length === 1) {
+                sentence += ' with ' + equipmentParts[0];
+            } else if (equipmentParts.length === 2) {
+                sentence += ' with ' + equipmentParts[0] + ' and ' + equipmentParts[1];
+            }
+
+            return sentence + '.';
         }
 
         function updateHorseState() {
@@ -1100,7 +1204,13 @@
                 var li = document.createElement('li');
                 var sellPrice = getSellPrice(item);
                 var sellButtonHtml = isShopOpen ? '<button onclick="sellItem(' + i + ')">Sell for ' + sellPrice + '</button>' : '<button disabled>Sell for ' + sellPrice + '</button>';
-                li.innerHTML = '<span><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br>' + getItemStatsText(item) + '</span><button onclick="equipItem(' + i + ')">Equip</button>' + sellButtonHtml;
+                var actionButtonHtml = '';
+                if (isHealthPotionItem(item)) {
+                    actionButtonHtml = '<button onclick="drinkHealthPotion(' + i + ')">Drink to restore ' + getHealthPotionRestoreAmount(item) + ' HP</button>';
+                } else {
+                    actionButtonHtml = '<button onclick="equipItem(' + i + ')">Equip</button>';
+                }
+                li.innerHTML = '<span><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br>' + getItemStatsText(item) + '</span>' + actionButtonHtml + sellButtonHtml;
                 inventoryList.appendChild(li);
             }
 
@@ -1434,10 +1544,44 @@
             }
         }
 
+        function refreshShopForNewDay() {
+            if (!shopItems || shopItems.length === 0 || !allItems || allItems.length === 0) {
+                return;
+            }
+
+            shopItems.shift();
+
+            var existingNames = {};
+            for (var i = 0; i < shopItems.length; i++) {
+                if (shopItems[i] && shopItems[i].name) {
+                    existingNames[shopItems[i].name] = true;
+                }
+            }
+
+            var candidates = [];
+            for (var c = 0; c < allItems.length; c++) {
+                var candidate = allItems[c];
+                if (!candidate || !candidate.name) {
+                    continue;
+                }
+                if (!existingNames[candidate.name]) {
+                    candidates.push(candidate);
+                }
+            }
+
+            if (candidates.length === 0) {
+                candidates = allItems.slice();
+            }
+
+            shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
+            showShop();
+        }
+
         function advanceSurvivalWave() {
             var nextEnemyCount = pendingShopEnemyCount + 1;
             survivalEnemyCount = nextEnemyCount;
             currentDay += 1;
+            refreshShopForNewDay();
             spawnEnemyWave(nextEnemyCount);
             addRandomTrees(dailyTreeGrowth, [heroPos, shopPos].concat(druidHouseCells, treasureCells.map(function(t) { return t.pos; }), treeCells, woodBlockCells, caveCells, enemies.filter(function(enemy) { return enemy && enemy.alive; }).map(function(enemy) { return enemy.pos; })));
             addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land, and new trees spread across the wilds.');
@@ -1552,7 +1696,7 @@
                     addEvent('Enemy attacks first for ' + enemyDamage + ' damage (' + heroStats.name + ' armor ' + getHeroArmor() + ' reduces to ' + enemyDamage + ', HP ' + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
 
                     if (heroStats.currentHealth <= 0) {
-                        handleHeroDeath();
+                        handleHeroDeath(currentEnemy);
                         return true;
                     }
 
@@ -1960,6 +2104,7 @@
             var caveButton = document.getElementById('caveButton');
             var mineButton = document.getElementById('mineButton');
             var treasureButton = document.getElementById('treasureButton');
+            var drinkPotionQuickButton = document.getElementById('drinkPotionQuickButton');
             var leftLogsPanel = document.getElementById('leftLogsPanel');
             var nearbyEnemy = getNearbyEnemy(heroPos);
             var onShop = isWithinOneCell(heroPos, shopPos);
@@ -1987,6 +2132,7 @@
             caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
             mineButton.style.display = 'none';
             treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
+            drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
 
             if (leftLogsPanel) {
                 leftLogsPanel.style.display = 'flex';
@@ -2395,7 +2541,7 @@
             }
 
             if (heroStats.currentHealth <= 0) {
-                handleHeroDeath();
+                handleHeroDeath(currentEnemy);
                 return;
             }
 
@@ -2621,6 +2767,7 @@
             var caveButton = document.getElementById('caveButton');
             var mineButton = document.getElementById('mineButton');
             var treasureButton = document.getElementById('treasureButton');
+            var drinkPotionQuickButton = document.getElementById('drinkPotionQuickButton');
             var onShop = isWithinOneCell(heroPos, shopPos);
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !battleActive && !gameOver;
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !battleActive && !gameOver;
@@ -2641,6 +2788,7 @@
                 caveButton.style.display = 'none';
                 mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                drinkPotionQuickButton.style.display = 'none';
                 if (leftLogsPanel) {
                     leftLogsPanel.style.display = 'none';
                 }
@@ -2664,6 +2812,7 @@
                 caveButton.style.display = 'none';
                 mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
                 if (leftLogsPanel) {
                     leftLogsPanel.style.display = 'none';
                 }
@@ -2686,6 +2835,7 @@
                 caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
                 mineButton.style.display = onCaveRock ? 'inline-block' : 'none';
                 treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
+                drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
                 if (leftLogsPanel) {
                     leftLogsPanel.style.display = 'flex';
                 }
@@ -2713,6 +2863,7 @@
                     buildButton.style.display = 'none';
                     stoneBuildButton.style.display = 'none';
                     treasureButton.style.display = 'none';
+                    drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
                     showBattleMap(false);
                     return;
                 }

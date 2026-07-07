@@ -112,5 +112,11 @@
     "slot": "main hand",
     "price": 26,
     "properties": { "damage": 6, "armor": 0 }
+  },
+  {
+    "name": "Health potion",
+    "slot": "consumable",
+    "price": 50,
+    "properties": { "damage": 0, "armor": 0, "healthPercentsRestores": 50 }
   }
 ]
