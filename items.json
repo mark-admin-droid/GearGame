@@ -30,7 +30,7 @@
     "properties": { "damage": 0, "armor": 2 }
   },
   {
-    "name": "Plate Armor",
+    "name": "Full Plate Armor",
     "slot": "torso",
     "price": 150,
     "properties": { "damage": 0, "armor": 10 }
@@ -52,6 +52,12 @@
     "slot": "main hand/off-hand",
     "price": 30,
     "properties": { "damage": 14, "armor": 0 }
+  },
+  {
+    "name": "Halberd",
+    "slot": "main hand/off-hand",
+    "price": 80,
+    "properties": { "damage": 24, "armor": 0 }
   },
   {
     "name": "Club",
@@ -76,6 +82,12 @@
     "slot": "torso",
     "price": 45,
     "properties": { "damage": 0, "armor": 5 }
+  },
+  {
+    "name": "Gambeson",
+    "slot": "torso",
+    "price": 25,
+    "properties": { "damage": 0, "armor": 3 }
   },
   {
     "name": "Mail",

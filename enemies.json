@@ -23,7 +23,7 @@
     "healthPoints": 42,
     "baseDamage": 18,
     "baseArmor": 6,
-    "dropsGold": 25,
+    "dropsGold": 30,
     "goldIncreasePerLevel": 1.2,
     "healthIncreasePerLevel": 1.1,
     "damageIncreasePerLevel": 1.1,
@@ -57,7 +57,7 @@
     "healthPoints": 20,
     "baseDamage": 8,
     "baseArmor": 1,
-    "dropsGold": 5,
+    "dropsGold": 15,
     "goldIncreasePerLevel": 1.2,
     "healthIncreasePerLevel": 1.1,
     "damageIncreasePerLevel": 1.1,
@@ -70,7 +70,7 @@
   {
     "name": "Troll",
     "behaviour": "wandering aggressive",
-    "baseLevel": 1,
+    "baseLevel": 2,
     "healthPoints": 35,
     "baseDamage": 15,
     "baseArmor": 5,
@@ -79,9 +79,9 @@
     "healthIncreasePerLevel": 1.1,
     "damageIncreasePerLevel": 1.1,
     "armorIncreasePerLevel": 1.1,
-    "canHaveWeaponFromLevel": 2,
+    "canHaveWeaponFromLevel": 3,
     "chanceOfHavingWeapon": 0.4,
-    "canHaveArmorFromLevel": 3,
+    "canHaveArmorFromLevel": 4,
     "chanceOfHavingArmor": 0.3
   },
   {

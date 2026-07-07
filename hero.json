@@ -2,6 +2,10 @@
   "name": "Hero",
   "startingGold": 50,
   "startingSurvivalEnemyCount": 3,
+  "baseLevel": 1,
+  "healthIncreasePerLevel": 1.1,
+  "damageIncreasePerLevel": 1.1,
+  "armorIncreasePerLevel": 1.1,
   "healthPoints": 30,
   "baseDamage": 3,
   "baseArmor": 0
