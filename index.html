@@ -564,6 +564,7 @@
     <div id="startScreen" class="startScreen screenCard">
         <h1>Welcome</h1>
         <p id="welcomeMessage"></p>
+        <p id="welcomeTip"></p>
         <button id="startButton" class="startButton gameButton" onclick="startGameFromWelcome()">Start</button>
     </div>
 
@@ -729,10 +730,23 @@
             'Defender of the realm, stock your pack and carve your path to glory.',
             'Wanderer, fortune favors the prepared. Arm up and face the wilds.'
         ];
+        var tipsMessages = [
+            'Kill enemies to level up.',
+            'Visit druid house to heal.',
+            'Buy armor to survive.'
+        ];
+
+        function getRandomTipMessage() {
+            if (!tipsMessages || tipsMessages.length === 0) {
+                return '';
+            }
+            return tipsMessages[Math.floor(Math.random() * tipsMessages.length)];
+        }
 
         function showStartScreen() {
             var startButton = document.getElementById('startButton');
             var welcomeMessage = document.getElementById('welcomeMessage');
+            var welcomeTip = document.getElementById('welcomeTip');
 
             document.getElementById('startScreen').style.display = 'block';
             document.getElementById('pageTitle').style.display = 'none';
@@ -747,12 +761,18 @@
                 if (!welcomeMessage.textContent) {
                     welcomeMessage.textContent = 'Loading game data from JSON files...';
                 }
+                if (welcomeTip) {
+                    welcomeTip.textContent = '';
+                }
                 return;
             }
 
             startButton.disabled = false;
             startButton.textContent = 'Start';
             welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+            if (welcomeTip) {
+                welcomeTip.textContent = 'Tip: ' + getRandomTipMessage();
+            }
         }
 
         function getSellPrice(item) {
@@ -1574,6 +1594,29 @@
             }
 
             shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
+
+            var healthPotionItem = null;
+            for (var a = 0; a < allItems.length; a++) {
+                if (allItems[a] && allItems[a].name === 'Health potion') {
+                    healthPotionItem = allItems[a];
+                    break;
+                }
+            }
+
+            if (healthPotionItem) {
+                var hasHealthPotion = false;
+                for (var p = 0; p < shopItems.length; p++) {
+                    if (shopItems[p] && shopItems[p].name === 'Health potion') {
+                        hasHealthPotion = true;
+                        break;
+                    }
+                }
+
+                if (!hasHealthPotion && shopItems.length > 0) {
+                    shopItems[shopItems.length - 1] = healthPotionItem;
+                }
+            }
+
             showShop();
         }
 
@@ -3122,12 +3165,16 @@
             Promise.all([
                 fetchJsonDynamic('items.json'),
                 fetchJsonDynamic('enemies.json'),
-                fetchJsonDynamic('hero.json')
+                fetchJsonDynamic('hero.json'),
+                fetchJsonDynamic('tips.json').catch(function() {
+                    return [];
+                })
             ])
                 .then(function(results) {
                     var loadedItems = results[0] || [];
                     var allEnemies = results[1] || [];
                     var heroConfig = results[2] || {};
+                    var loadedTips = results[3] || [];
 
                     if (!Array.isArray(loadedItems) || loadedItems.length === 0) {
                         throw new Error('items.json is empty or invalid.');
@@ -3158,6 +3205,16 @@
                     }
 
                     allItems = loadedItems;
+                    if (Array.isArray(loadedTips) && loadedTips.length > 0) {
+                        var normalizedTips = loadedTips.filter(function(tip) {
+                            return typeof tip === 'string' && tip.trim().length > 0;
+                        }).map(function(tip) {
+                            return tip.trim();
+                        });
+                        if (normalizedTips.length > 0) {
+                            tipsMessages = normalizedTips;
+                        }
+                    }
                     startingGold = heroConfig.startingGold;
                     startingSurvivalEnemyCount = Math.floor(heroConfig.startingSurvivalEnemyCount);
                     survivalEnemyCount = startingSurvivalEnemyCount;
@@ -3180,12 +3237,16 @@
 
                     var startButton = document.getElementById('startButton');
                     var welcomeMessage = document.getElementById('welcomeMessage');
+                    var welcomeTip = document.getElementById('welcomeTip');
                     if (startButton) {
                         startButton.disabled = false;
                         startButton.textContent = 'Start';
                     }
                     if (welcomeMessage) {
                         welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+                    }
+                    if (welcomeTip) {
+                        welcomeTip.textContent = 'Tip: ' + getRandomTipMessage();
                     }
 
                     showShop();
@@ -3199,6 +3260,7 @@
 
                     var startButton = document.getElementById('startButton');
                     var welcomeMessage = document.getElementById('welcomeMessage');
+                    var welcomeTip = document.getElementById('welcomeTip');
                     var warningMessage = document.getElementById('warningMessage');
 
                     if (startButton) {
@@ -3207,6 +3269,9 @@
                     }
                     if (welcomeMessage) {
                         welcomeMessage.textContent = 'Could not load game data. Check items.json, enemies.json and hero.json.';
+                    }
+                    if (welcomeTip) {
+                        welcomeTip.textContent = '';
                     }
                     if (warningMessage) {
                         warningMessage.textContent = 'Data load error: ' + (error && error.message ? error.message : 'Unknown error');
