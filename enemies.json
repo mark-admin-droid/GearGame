@@ -16,6 +16,23 @@
     "canHaveArmorFromLevel": 3,
     "chanceOfHavingArmor": 0.3
   },
+ {
+    "name": "Skeleton",
+    "behaviour": "active aggressive",
+    "baseLevel": 1,
+    "healthPoints": 10,
+    "baseDamage": 5,
+    "baseArmor": 1,
+    "dropsGold": 3,
+    "goldIncreasePerLevel": 1.2,
+    "healthIncreasePerLevel": 1.1,
+    "damageIncreasePerLevel": 1.1,
+    "armorIncreasePerLevel": 1.1,
+    "canHaveWeaponFromLevel": 2,
+    "chanceOfHavingWeapon": 0.4,
+    "canHaveArmorFromLevel": 3,
+    "chanceOfHavingArmor": 0.3
+  },
   {
     "name": "Goblin Champion",
     "behaviour": "active aggressive",

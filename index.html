@@ -683,6 +683,12 @@
         var inCave = false;
         var caveHeroPos = { x: 4, y: 7 };
         var caveRockCells = [];
+        var caveExitPos = null;
+        var caveExitDiscovered = false;
+        var caveGeneratedDay = 0;
+        var caveEnemies = [];
+        var caveSkeletonRockKeys = {};
+        var caveGoldRockKeys = {};
         var minedRockItems = [];
         var battleActive = false;
         var gameOver = false;
@@ -704,6 +710,10 @@
         var heroLevel = 1;
         var heroExperience = 0;
         var heroNextLevelXp = 5;
+        var shopItemTargetCount = 10;
+        var enemyTurnPending = false;
+        var enemyMoveTimeoutId = null;
+        var enemyMoveDelayMs = 500;
         var isFreshDataMode = false;
         var heroScaling = {
             baseLevel: 1,
@@ -972,6 +982,10 @@
             inCave = false;
             caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
             caveRockCells = [];
+            caveExitPos = null;
+            caveExitDiscovered = false;
+            caveGeneratedDay = 0;
+            caveEnemies = [];
             minedRockItems = [];
             enemies = [];
             currentEnemy = null;
@@ -996,7 +1010,7 @@
             document.getElementById('deathLog').innerHTML = '';
             showBattleActions(false);
 
-            shopItems = getRandomShopItems(allItems, 10);
+            shopItems = getRandomShopItems(allItems, shopItemTargetCount);
             showShop();
             showInventory();
         }
@@ -1412,6 +1426,39 @@
             return result;
         }
 
+        function refillShopToTargetCount() {
+            if (!allItems || allItems.length === 0) {
+                return;
+            }
+
+            var targetCount = Math.min(shopItemTargetCount, allItems.length);
+            while (shopItems.length < targetCount) {
+                var existingNames = {};
+                for (var i = 0; i < shopItems.length; i++) {
+                    if (shopItems[i] && shopItems[i].name) {
+                        existingNames[shopItems[i].name] = true;
+                    }
+                }
+
+                var candidates = [];
+                for (var c = 0; c < allItems.length; c++) {
+                    var candidate = allItems[c];
+                    if (!candidate || !candidate.name) {
+                        continue;
+                    }
+                    if (!existingNames[candidate.name]) {
+                        candidates.push(candidate);
+                    }
+                }
+
+                if (candidates.length === 0) {
+                    candidates = allItems.slice();
+                }
+
+                shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
+            }
+        }
+
         function isCellBlockedForEnemyMovement(candidate, movingEnemy, allowHeroCell) {
             if (!candidate) {
                 return true;
@@ -1514,10 +1561,12 @@
 
             var availableTemplates = enemyTemplates.filter(function(enemyTemplate) {
                 var templateBaseLevel = typeof enemyTemplate.baseLevel === 'number' ? Math.max(1, Math.floor(enemyTemplate.baseLevel)) : 1;
-                return templateBaseLevel <= currentDay;
+                return templateBaseLevel <= currentDay && enemyTemplate.name !== 'Skeleton';
             });
             if (availableTemplates.length === 0) {
-                availableTemplates = enemyTemplates.slice();
+                availableTemplates = enemyTemplates.filter(function(enemyTemplate) {
+                    return enemyTemplate && enemyTemplate.name !== 'Skeleton';
+                });
             }
 
             var template = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
@@ -1565,35 +1614,19 @@
         }
 
         function refreshShopForNewDay() {
-            if (!shopItems || shopItems.length === 0 || !allItems || allItems.length === 0) {
+            if (!allItems || allItems.length === 0) {
                 return;
             }
 
-            shopItems.shift();
-
-            var existingNames = {};
-            for (var i = 0; i < shopItems.length; i++) {
-                if (shopItems[i] && shopItems[i].name) {
-                    existingNames[shopItems[i].name] = true;
-                }
+            if (!shopItems) {
+                shopItems = [];
             }
 
-            var candidates = [];
-            for (var c = 0; c < allItems.length; c++) {
-                var candidate = allItems[c];
-                if (!candidate || !candidate.name) {
-                    continue;
-                }
-                if (!existingNames[candidate.name]) {
-                    candidates.push(candidate);
-                }
+            if (shopItems.length > 0) {
+                shopItems.shift();
             }
 
-            if (candidates.length === 0) {
-                candidates = allItems.slice();
-            }
-
-            shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
+            refillShopToTargetCount();
 
             var healthPotionItem = null;
             for (var a = 0; a < allItems.length; a++) {
@@ -1997,6 +2030,12 @@
 
         function generateCaveRocks() {
             caveRockCells = [];
+            caveExitPos = null;
+            caveExitDiscovered = false;
+            caveGeneratedDay = currentDay;
+            caveEnemies = [];
+            caveSkeletonRockKeys = {};
+            caveGoldRockKeys = {};
             var blockedCells = [caveHeroPos];
 
             for (var rockIndex = 0; rockIndex < 16; rockIndex++) {
@@ -2023,6 +2062,34 @@
                 caveRockCells.push(rockPos);
                 blockedCells.push(rockPos);
             }
+
+            if (caveRockCells.length > 0) {
+                var exitRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
+                caveExitPos = { x: exitRock.x, y: exitRock.y };
+            }
+
+            var skeletonAssigned = false;
+            var goldAssigned = false;
+            for (var rockOutcomeIndex = 0; rockOutcomeIndex < caveRockCells.length; rockOutcomeIndex++) {
+                var rockKey = caveRockCells[rockOutcomeIndex].x + '_' + caveRockCells[rockOutcomeIndex].y;
+                if (Math.random() < 0.25) {
+                    caveSkeletonRockKeys[rockKey] = true;
+                    skeletonAssigned = true;
+                }
+                if (Math.random() < 0.25) {
+                    caveGoldRockKeys[rockKey] = true;
+                    goldAssigned = true;
+                }
+            }
+
+            if (!skeletonAssigned && caveRockCells.length > 0) {
+                var forcedSkeletonRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
+                caveSkeletonRockKeys[forcedSkeletonRock.x + '_' + forcedSkeletonRock.y] = true;
+            }
+            if (!goldAssigned && caveRockCells.length > 0) {
+                var forcedGoldRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
+                caveGoldRockKeys[forcedGoldRock.x + '_' + forcedGoldRock.y] = true;
+            }
         }
 
         function isCaveRockCell(pos) {
@@ -2035,6 +2102,26 @@
             return false;
         }
 
+        function getCaveEnemyAt(pos) {
+            for (var i = 0; i < caveEnemies.length; i++) {
+                var caveEnemy = caveEnemies[i];
+                if (caveEnemy && caveEnemy.alive && caveEnemy.pos.x === pos.x && caveEnemy.pos.y === pos.y) {
+                    return caveEnemy;
+                }
+            }
+            return null;
+        }
+
+        function getNearbyCaveEnemy(pos) {
+            for (var i = 0; i < caveEnemies.length; i++) {
+                var caveEnemy = caveEnemies[i];
+                if (caveEnemy && caveEnemy.alive && isWithinOneCell(pos, caveEnemy.pos)) {
+                    return caveEnemy;
+                }
+            }
+            return null;
+        }
+
         function getAdjacentCaveRockCell(pos) {
             for (var i = 0; i < caveRockCells.length; i++) {
                 if (isWithinOneCell(pos, caveRockCells[i]) && !isSameCell(pos, caveRockCells[i])) {
@@ -2042,6 +2129,71 @@
                 }
             }
             return null;
+        }
+
+        function isCaveExitCell(pos) {
+            return !!(caveExitDiscovered && caveExitPos && pos && caveExitPos.x === pos.x && caveExitPos.y === pos.y);
+        }
+
+        function getSkeletonTemplate() {
+            for (var i = 0; i < enemyTemplates.length; i++) {
+                if (enemyTemplates[i] && typeof enemyTemplates[i].name === 'string' && enemyTemplates[i].name.trim().toLowerCase() === 'skeleton') {
+                    return enemyTemplates[i];
+                }
+            }
+
+            return {
+                name: 'Skeleton',
+                behaviour: 'active aggressive',
+                baseLevel: 1,
+                healthPoints: 10,
+                baseDamage: 5,
+                baseArmor: 1,
+                dropsGold: 3,
+                goldIncreasePerLevel: 1.2,
+                healthIncreasePerLevel: 1.1,
+                damageIncreasePerLevel: 1.1,
+                armorIncreasePerLevel: 1.1
+            };
+        }
+
+        function createCaveSkeletonEncounter() {
+            var skeletonTemplate = getSkeletonTemplate();
+
+            var skeletonLevel = getEnemyLevelForCurrentDay(skeletonTemplate);
+            var healthIncreasePerLevel = typeof skeletonTemplate.healthIncreasePerLevel === 'number' ? skeletonTemplate.healthIncreasePerLevel : 1;
+            var damageIncreasePerLevel = typeof skeletonTemplate.damageIncreasePerLevel === 'number' ? skeletonTemplate.damageIncreasePerLevel : 1;
+            var armorIncreasePerLevel = typeof skeletonTemplate.armorIncreasePerLevel === 'number' ? skeletonTemplate.armorIncreasePerLevel : 1;
+
+            currentEnemy = {
+                name: skeletonTemplate.name,
+                behaviour: skeletonTemplate.behaviour,
+                level: skeletonLevel,
+                healthPoints: getScaledStat(skeletonTemplate.healthPoints, healthIncreasePerLevel, skeletonLevel, 1),
+                baseDamage: getScaledStat(typeof skeletonTemplate.baseDamage === 'number' ? skeletonTemplate.baseDamage : 5, damageIncreasePerLevel, skeletonLevel, 0),
+                baseArmor: getScaledStat(typeof skeletonTemplate.baseArmor === 'number' ? skeletonTemplate.baseArmor : 0, armorIncreasePerLevel, skeletonLevel, 0),
+                dropsGold: getEnemyGoldDrop(skeletonTemplate, skeletonLevel),
+                alive: true,
+                equippedWeapon: null,
+                equippedArmor: null
+            };
+            return currentEnemy;
+        }
+
+        function spawnCaveSkeletonAt(pos) {
+            if (!pos) {
+                return false;
+            }
+
+            if (getCaveEnemyAt(pos)) {
+                return false;
+            }
+
+            var skeleton = createCaveSkeletonEncounter();
+            skeleton.pos = { x: pos.x, y: pos.y };
+            caveEnemies.push(skeleton);
+            addEvent('A ' + getEnemyDisplayName(skeleton) + ' rises from the shattered rock!');
+            return true;
         }
 
         function renderCaveGrid() {
@@ -2060,6 +2212,12 @@
                     if (x === caveHeroPos.x && y === caveHeroPos.y) {
                         cell.textContent = 'H';
                         cell.classList.add('hero');
+                    } else if (getCaveEnemyAt({ x: x, y: y })) {
+                        cell.textContent = 'S';
+                        cell.style.background = '#8b1a1a';
+                        cell.style.color = '#fff';
+                    } else if (isCaveExitCell({ x: x, y: y })) {
+                        cell.textContent = 'E';
                     } else if (isCaveRockCell({ x: x, y: y })) {
                         cell.classList.add('rock');
                     } else {
@@ -2101,10 +2259,28 @@
                 return;
             }
 
-            inCave = !inCave;
             if (inCave) {
+                if (!caveExitDiscovered || !caveExitPos) {
+                    addEvent('Hero cannot leave the cave yet. The hidden exit is still buried under rock.');
+                    renderBattle();
+                    return;
+                }
+
+                if (!isWithinOneCell(caveHeroPos, caveExitPos)) {
+                    addEvent('Hero must stand near the revealed cave exit to leave.');
+                    renderBattle();
+                    return;
+                }
+
+                inCave = false;
+                addEvent('Hero climbs out of the cave through the hidden exit.');
+            } else {
+                inCave = true;
                 caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
-                generateCaveRocks();
+                if (caveGeneratedDay !== currentDay || !caveExitPos) {
+                    generateCaveRocks();
+                }
+                addEvent('Hero descends into the cave. Find the hidden exit beneath the rocks.');
             }
             renderBattle();
         }
@@ -2132,7 +2308,58 @@
             });
             minedRockItems.push({ id: Date.now() + '_' + Math.floor(Math.random() * 100000) });
             addEvent('Hero mines a rock in the cave.');
+            var minedRockKey = nearbyRock.x + '_' + nearbyRock.y;
+
+            if (caveExitPos && nearbyRock.x === caveExitPos.x && nearbyRock.y === caveExitPos.y) {
+                caveExitDiscovered = true;
+                addEvent('A hidden cave exit is revealed beneath the broken rock!');
+            } else if (caveRockCells.length === 0 && caveExitPos && !caveExitDiscovered) {
+                caveExitDiscovered = true;
+                caveExitPos = { x: caveHeroPos.x, y: caveHeroPos.y };
+                addEvent('With the final rock gone, a hidden cave exit is revealed in the chamber!');
+            }
+
+            if (caveGoldRockKeys[minedRockKey]) {
+                var caveGold = heroLevel * 2;
+                gold += caveGold;
+                goldAcquired += caveGold;
+                addEvent('Hero finds ' + caveGold + ' gold beneath the rock.');
+                delete caveGoldRockKeys[minedRockKey];
+            }
+
+            if (caveSkeletonRockKeys[minedRockKey]) {
+                delete caveSkeletonRockKeys[minedRockKey];
+                spawnCaveSkeletonAt(nearbyRock);
+            }
+
             renderBattle();
+        }
+
+        function scheduleEnemyMoveAfterHeroTurn() {
+            if (enemyTurnPending || inCave || battleActive || gameOver) {
+                return;
+            }
+
+            enemyTurnPending = true;
+            if (enemyMoveTimeoutId) {
+                clearTimeout(enemyMoveTimeoutId);
+            }
+
+            enemyMoveTimeoutId = setTimeout(function() {
+                enemyTurnPending = false;
+                enemyMoveTimeoutId = null;
+
+                if (gameOver || battleActive || inCave) {
+                    renderBattle();
+                    return;
+                }
+
+                if (moveEnemies()) {
+                    return;
+                }
+
+                renderBattle();
+            }, enemyMoveDelayMs);
         }
 
         function refreshExplorationUi() {
@@ -2509,7 +2736,7 @@
             }
 
             if (!battleActive) {
-                var nearbyEnemy = getNearbyEnemy(heroPos);
+                var nearbyEnemy = inCave ? getNearbyCaveEnemy(caveHeroPos) : getNearbyEnemy(heroPos);
                 if (nearbyEnemy) {
                     startClash(nearbyEnemy);
                 }
@@ -2605,7 +2832,7 @@
         }
 
         function moveHeroTo(x, y) {
-            if (gameOver || battleActive) {
+            if (gameOver || battleActive || enemyTurnPending) {
                 return;
             }
 
@@ -2616,6 +2843,11 @@
                     return;
                 }
                 caveHeroPos = { x: x, y: y };
+                var caveEnemyOnTile = getCaveEnemyAt(caveHeroPos);
+                if (caveEnemyOnTile) {
+                    startClash(caveEnemyOnTile);
+                    return;
+                }
                 renderBattle();
                 return;
             }
@@ -2664,8 +2896,6 @@
                 enemyCurrentHealth = enemyOnTile.healthPoints;
                 battleActive = true;
                 addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyOnTile));
-            } else if (moveEnemies()) {
-                return;
             } else if (isSameCell(heroPos, shopPos)) {
                 addEvent('Turn ' + turnNumber + '. Hero reached the shop. Use Enter Shop to browse gear.');
             } else if (isDruidHouseCell(heroPos)) {
@@ -2682,6 +2912,9 @@
             }
 
             renderBattle();
+            if (!battleActive && !inCave && !gameOver) {
+                scheduleEnemyMoveAfterHeroTurn();
+            }
         }
 
         function startClash(enemy) {
@@ -2689,10 +2922,16 @@
                 return;
             }
 
-            var enemyToBattle = enemy || getEnemyAt(heroPos) || getNearbyEnemy(heroPos);
+            var enemyToBattle = enemy || (inCave ? getCaveEnemyAt(caveHeroPos) || getNearbyCaveEnemy(caveHeroPos) : getEnemyAt(heroPos) || getNearbyEnemy(heroPos));
             if (!enemyToBattle) {
                 return;
             }
+
+            if (enemyMoveTimeoutId) {
+                clearTimeout(enemyMoveTimeoutId);
+                enemyMoveTimeoutId = null;
+            }
+            enemyTurnPending = false;
 
             currentEnemy = enemyToBattle;
             enemyCurrentHealth = enemyToBattle.healthPoints;
@@ -2723,6 +2962,7 @@
             battleGrid.innerHTML = '';
 
             var nearbyEnemy = getNearbyEnemy(heroPos);
+            var nearbyCaveEnemy = inCave ? getNearbyCaveEnemy(caveHeroPos) : null;
             var enemyOnTile = getEnemyAt(heroPos);
 
             for (var y = 0; y < mapSize; y++) {
@@ -2897,8 +3137,19 @@
                     if (leftLogsPanel) {
                         leftLogsPanel.style.display = 'none';
                     }
-                    battleInfo.textContent = onCaveRock ? 'A rock is next to you. Mine it.' : hasEquippedPickaxe() ? 'Inside the cave.' : 'Inside the cave. Equip a Pickaxe to mine rocks.';
-                    attackButton.style.display = 'none';
+                    if (isCaveExitCell(caveHeroPos)) {
+                        battleInfo.textContent = 'The hidden exit is beneath your feet. Use Leave Cave to escape.';
+                    } else if (caveExitDiscovered) {
+                        battleInfo.textContent = 'The hidden exit has been revealed. Find the E tile to leave the cave.';
+                    } else if (nearbyCaveEnemy) {
+                        battleInfo.textContent = 'A cave skeleton is nearby. Fight or move away.';
+                    } else {
+                        battleInfo.textContent = onCaveRock ? 'A rock is next to you. Mine it.' : hasEquippedPickaxe() ? 'Inside the cave. Break rocks to uncover the hidden exit.' : 'Inside the cave. Equip a Pickaxe to mine rocks and uncover the hidden exit.';
+                    }
+                    attackButton.style.display = nearbyCaveEnemy ? 'inline-block' : 'none';
+                    if (nearbyCaveEnemy) {
+                        attackButton.textContent = 'Fight';
+                    }
                     fleeButton.style.display = 'none';
                     shopButton.style.display = 'none';
                     druidHouseButton.style.display = 'none';
@@ -3045,6 +3296,10 @@
             caveCells = getDailyCaveCells();
             inCave = false;
             caveHeroPos = { x: Math.floor(caveSize / 2), y: caveSize - 1 };
+            caveExitPos = null;
+            caveExitDiscovered = false;
+            caveGeneratedDay = 0;
+            caveEnemies = [];
             while (isCaveCell(heroPos)) {
                 heroPos = getRandomCell();
             }
@@ -3220,6 +3475,7 @@
                     survivalEnemyCount = startingSurvivalEnemyCount;
 
                     shopItems = getRandomShopItems(allItems, 10);
+                    shopItemTargetCount = 10;
 
                     enemyTemplates = allEnemies;
                     heroStats.name = heroConfig.name;
@@ -3289,6 +3545,58 @@
 
         loadItems();
         showStartScreen();
+
+        function handleAdventureKeyboardNavigation(event) {
+            if (gameOver || battleActive || enemyTurnPending) {
+                return;
+            }
+
+            var mainView = document.getElementById('mainView');
+            var battleScreen = document.getElementById('battleScreen');
+            if (!battleScreen || battleScreen.style.display === 'none') {
+                return;
+            }
+            if (mainView && mainView.style.display !== 'none') {
+                return;
+            }
+
+            var targetTag = event.target && event.target.tagName ? event.target.tagName.toLowerCase() : '';
+            if (targetTag === 'input' || targetTag === 'textarea' || targetTag === 'select') {
+                return;
+            }
+
+            var key = (event.key || '').toLowerCase();
+            var deltas = {
+                w: { x: 0, y: -1 },
+                x: { x: 0, y: 1 },
+                a: { x: -1, y: 0 },
+                d: { x: 1, y: 0 },
+                q: { x: -1, y: -1 },
+                e: { x: 1, y: -1 },
+                z: { x: -1, y: 1 },
+                c: { x: 1, y: 1 }
+            };
+
+            if (!deltas[key]) {
+                return;
+            }
+
+            event.preventDefault();
+
+            var currentPos = inCave ? caveHeroPos : heroPos;
+            var maxX = inCave ? caveSize - 1 : mapSize - 1;
+            var maxY = inCave ? caveSize - 1 : mapSize - 1;
+            var nextX = currentPos.x + deltas[key].x;
+            var nextY = currentPos.y + deltas[key].y;
+
+            if (nextX < 0 || nextY < 0 || nextX > maxX || nextY > maxY) {
+                return;
+            }
+
+            moveHeroTo(nextX, nextY);
+        }
+
+        document.addEventListener('keydown', handleAdventureKeyboardNavigation);
     </script>
 </body>
 </html>
