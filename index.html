@@ -1803,6 +1803,128 @@
             return false;
         }
 
+        function isCellBlockedForCaveEnemyMovement(candidate, movingEnemy, allowHeroCell) {
+            if (!candidate) {
+                return true;
+            }
+
+            if (candidate.x < 0 || candidate.x >= caveSize || candidate.y < 0 || candidate.y >= caveSize) {
+                return true;
+            }
+
+            if (!allowHeroCell && candidate.x === caveHeroPos.x && candidate.y === caveHeroPos.y) {
+                return true;
+            }
+
+            if (isCaveRockCell(candidate)) {
+                return true;
+            }
+
+            for (var i = 0; i < caveEnemies.length; i++) {
+                var otherEnemy = caveEnemies[i];
+                if (!otherEnemy || !otherEnemy.alive || otherEnemy === movingEnemy) {
+                    continue;
+                }
+
+                if (otherEnemy.pos.x === candidate.x && otherEnemy.pos.y === candidate.y) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function getCaveEnemyMovementOptions(pos) {
+            var options = [];
+            var directions = [
+                { x: -1, y: -1 },
+                { x: 0, y: -1 },
+                { x: 1, y: -1 },
+                { x: -1, y: 0 },
+                { x: 1, y: 0 },
+                { x: -1, y: 1 },
+                { x: 0, y: 1 },
+                { x: 1, y: 1 }
+            ];
+
+            for (var i = 0; i < directions.length; i++) {
+                options.push({ x: pos.x + directions[i].x, y: pos.y + directions[i].y });
+            }
+
+            return options;
+        }
+
+        function getCaveEnemyChaseOptions(pos) {
+            var options = getCaveEnemyMovementOptions(pos);
+            options.sort(function(a, b) {
+                var aDist = Math.abs(a.x - caveHeroPos.x) + Math.abs(a.y - caveHeroPos.y);
+                var bDist = Math.abs(b.x - caveHeroPos.x) + Math.abs(b.y - caveHeroPos.y);
+                return aDist - bDist;
+            });
+            return options;
+        }
+
+        function moveCaveEnemies() {
+            if (!inCave || gameOver || battleActive) {
+                return false;
+            }
+
+            for (var i = 0; i < caveEnemies.length; i++) {
+                var enemy = caveEnemies[i];
+                if (!enemy || !enemy.alive) {
+                    continue;
+                }
+
+                var behaviour = (enemy.behaviour || '').toLowerCase();
+                var options = [];
+
+                if (behaviour.indexOf('active aggressive') !== -1) {
+                    options = getCaveEnemyChaseOptions(enemy.pos);
+                } else if (behaviour.indexOf('aggressive') !== -1) {
+                    options = getCaveEnemyMovementOptions(enemy.pos);
+                }
+
+                if (options.length === 0) {
+                    continue;
+                }
+
+                var allowHeroCell = behaviour.indexOf('active aggressive') !== -1 || behaviour.indexOf('wandering aggressive') !== -1;
+                options = options.filter(function(option) {
+                    return !isCellBlockedForCaveEnemyMovement(option, enemy, allowHeroCell);
+                });
+
+                if (options.length === 0) {
+                    continue;
+                }
+
+                var chosenIndex = behaviour.indexOf('active aggressive') !== -1 ? 0 : Math.floor(Math.random() * options.length);
+                enemy.pos = options[chosenIndex];
+
+                if (isSameCell(enemy.pos, caveHeroPos)) {
+                    currentEnemy = enemy;
+                    enemyCurrentHealth = enemy.healthPoints;
+                    battleActive = true;
+                    addEvent('Turn ' + turnNumber + '. ' + enemy.name + ' reaches the hero first and strikes!');
+
+                    var enemyDamage = Math.max(0, getEnemyDamage(currentEnemy) - getHeroArmor());
+                    var oldHeroHealth = heroStats.currentHealth;
+                    heroStats.currentHealth = Math.max(0, heroStats.currentHealth - enemyDamage);
+                    addEvent('Enemy attacks first for ' + enemyDamage + ' damage (' + heroStats.name + ' armor ' + getHeroArmor() + ' reduces to ' + enemyDamage + ', HP ' + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+
+                    if (heroStats.currentHealth <= 0) {
+                        handleHeroDeath(currentEnemy);
+                        return true;
+                    }
+
+                    showBattleActions(true);
+                    renderBattle();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         function getAdjacentCells(pos) {
             var cells = [];
             var step = hasHorse ? 3 : 1;
@@ -2178,7 +2300,7 @@
             var damageIncreasePerLevel = typeof template.damageIncreasePerLevel === 'number' ? template.damageIncreasePerLevel : 1;
             var armorIncreasePerLevel = typeof template.armorIncreasePerLevel === 'number' ? template.armorIncreasePerLevel : 1;
 
-            currentEnemy = {
+            var caveEnemy = {
                 name: template.name,
                 behaviour: template.behaviour,
                 level: enemyLevel,
@@ -2190,7 +2312,7 @@
                 equippedWeapon: null,
                 equippedArmor: null
             };
-            return currentEnemy;
+            return caveEnemy;
         }
 
         function spawnCaveEnemyAt(pos) {
@@ -2351,10 +2473,13 @@
             }
 
             renderBattle();
+            if (!battleActive && inCave && !gameOver) {
+                scheduleEnemyMoveAfterHeroTurn();
+            }
         }
 
         function scheduleEnemyMoveAfterHeroTurn() {
-            if (enemyTurnPending || inCave || battleActive || gameOver) {
+            if (enemyTurnPending || battleActive || gameOver) {
                 return;
             }
 
@@ -2367,7 +2492,15 @@
                 enemyTurnPending = false;
                 enemyMoveTimeoutId = null;
 
-                if (gameOver || battleActive || inCave) {
+                if (gameOver || battleActive) {
+                    renderBattle();
+                    return;
+                }
+
+                if (inCave) {
+                    if (moveCaveEnemies()) {
+                        return;
+                    }
                     renderBattle();
                     return;
                 }
@@ -2867,6 +3000,9 @@
                     return;
                 }
                 renderBattle();
+                if (!battleActive && inCave && !gameOver) {
+                    scheduleEnemyMoveAfterHeroTurn();
+                }
                 return;
             }
 
