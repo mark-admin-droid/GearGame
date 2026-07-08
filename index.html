@@ -687,7 +687,7 @@
         var caveExitDiscovered = false;
         var caveGeneratedDay = 0;
         var caveEnemies = [];
-        var caveSkeletonRockKeys = {};
+        var caveEnemyRockKeys = {};
         var caveGoldRockKeys = {};
         var minedRockItems = [];
         var battleActive = false;
@@ -1390,6 +1390,20 @@
             return candidates[Math.floor(Math.random() * candidates.length)];
         }
 
+        function shouldSpawnOnSurface(template) {
+            if (!template) {
+                return false;
+            }
+            if (typeof template.spawnOnSurface === 'boolean') {
+                return template.spawnOnSurface;
+            }
+            return true;
+        }
+
+        function shouldSpawnInCave(template) {
+            return !!(template && template.spawnsInCave === true);
+        }
+
         function getRandomShopItems(items, count) {
             var result = [];
             var source = (items || []).slice();
@@ -1561,12 +1575,16 @@
 
             var availableTemplates = enemyTemplates.filter(function(enemyTemplate) {
                 var templateBaseLevel = typeof enemyTemplate.baseLevel === 'number' ? Math.max(1, Math.floor(enemyTemplate.baseLevel)) : 1;
-                return templateBaseLevel <= currentDay && enemyTemplate.name !== 'Skeleton';
+                return templateBaseLevel <= currentDay && shouldSpawnOnSurface(enemyTemplate);
             });
             if (availableTemplates.length === 0) {
                 availableTemplates = enemyTemplates.filter(function(enemyTemplate) {
-                    return enemyTemplate && enemyTemplate.name !== 'Skeleton';
+                    return shouldSpawnOnSurface(enemyTemplate);
                 });
+            }
+
+            if (availableTemplates.length === 0) {
+                return;
             }
 
             var template = availableTemplates[Math.floor(Math.random() * availableTemplates.length)];
@@ -2034,7 +2052,7 @@
             caveExitDiscovered = false;
             caveGeneratedDay = currentDay;
             caveEnemies = [];
-            caveSkeletonRockKeys = {};
+            caveEnemyRockKeys = {};
             caveGoldRockKeys = {};
             var blockedCells = [caveHeroPos];
 
@@ -2068,13 +2086,16 @@
                 caveExitPos = { x: exitRock.x, y: exitRock.y };
             }
 
-            var skeletonAssigned = false;
+            var caveEnemyAssigned = false;
             var goldAssigned = false;
+            var hasCaveEnemyTemplate = enemyTemplates.some(function(enemyTemplate) {
+                return shouldSpawnInCave(enemyTemplate);
+            });
             for (var rockOutcomeIndex = 0; rockOutcomeIndex < caveRockCells.length; rockOutcomeIndex++) {
                 var rockKey = caveRockCells[rockOutcomeIndex].x + '_' + caveRockCells[rockOutcomeIndex].y;
-                if (Math.random() < 0.25) {
-                    caveSkeletonRockKeys[rockKey] = true;
-                    skeletonAssigned = true;
+                if (hasCaveEnemyTemplate && Math.random() < 0.25) {
+                    caveEnemyRockKeys[rockKey] = true;
+                    caveEnemyAssigned = true;
                 }
                 if (Math.random() < 0.25) {
                     caveGoldRockKeys[rockKey] = true;
@@ -2082,9 +2103,9 @@
                 }
             }
 
-            if (!skeletonAssigned && caveRockCells.length > 0) {
-                var forcedSkeletonRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
-                caveSkeletonRockKeys[forcedSkeletonRock.x + '_' + forcedSkeletonRock.y] = true;
+            if (hasCaveEnemyTemplate && !caveEnemyAssigned && caveRockCells.length > 0) {
+                var forcedCaveEnemyRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
+                caveEnemyRockKeys[forcedCaveEnemyRock.x + '_' + forcedCaveEnemyRock.y] = true;
             }
             if (!goldAssigned && caveRockCells.length > 0) {
                 var forcedGoldRock = caveRockCells[Math.floor(Math.random() * caveRockCells.length)];
@@ -2135,44 +2156,36 @@
             return !!(caveExitDiscovered && caveExitPos && pos && caveExitPos.x === pos.x && caveExitPos.y === pos.y);
         }
 
-        function getSkeletonTemplate() {
-            for (var i = 0; i < enemyTemplates.length; i++) {
-                if (enemyTemplates[i] && typeof enemyTemplates[i].name === 'string' && enemyTemplates[i].name.trim().toLowerCase() === 'skeleton') {
-                    return enemyTemplates[i];
-                }
+        function getRandomCaveEnemyTemplate() {
+            var caveTemplates = enemyTemplates.filter(function(enemyTemplate) {
+                return shouldSpawnInCave(enemyTemplate);
+            });
+
+            if (caveTemplates.length === 0) {
+                return null;
             }
 
-            return {
-                name: 'Skeleton',
-                behaviour: 'active aggressive',
-                baseLevel: 1,
-                healthPoints: 10,
-                baseDamage: 5,
-                baseArmor: 1,
-                dropsGold: 3,
-                goldIncreasePerLevel: 1.2,
-                healthIncreasePerLevel: 1.1,
-                damageIncreasePerLevel: 1.1,
-                armorIncreasePerLevel: 1.1
-            };
+            return caveTemplates[Math.floor(Math.random() * caveTemplates.length)];
         }
 
-        function createCaveSkeletonEncounter() {
-            var skeletonTemplate = getSkeletonTemplate();
+        function createCaveEnemyEncounter(template) {
+            if (!template) {
+                return null;
+            }
 
-            var skeletonLevel = getEnemyLevelForCurrentDay(skeletonTemplate);
-            var healthIncreasePerLevel = typeof skeletonTemplate.healthIncreasePerLevel === 'number' ? skeletonTemplate.healthIncreasePerLevel : 1;
-            var damageIncreasePerLevel = typeof skeletonTemplate.damageIncreasePerLevel === 'number' ? skeletonTemplate.damageIncreasePerLevel : 1;
-            var armorIncreasePerLevel = typeof skeletonTemplate.armorIncreasePerLevel === 'number' ? skeletonTemplate.armorIncreasePerLevel : 1;
+            var enemyLevel = getEnemyLevelForCurrentDay(template);
+            var healthIncreasePerLevel = typeof template.healthIncreasePerLevel === 'number' ? template.healthIncreasePerLevel : 1;
+            var damageIncreasePerLevel = typeof template.damageIncreasePerLevel === 'number' ? template.damageIncreasePerLevel : 1;
+            var armorIncreasePerLevel = typeof template.armorIncreasePerLevel === 'number' ? template.armorIncreasePerLevel : 1;
 
             currentEnemy = {
-                name: skeletonTemplate.name,
-                behaviour: skeletonTemplate.behaviour,
-                level: skeletonLevel,
-                healthPoints: getScaledStat(skeletonTemplate.healthPoints, healthIncreasePerLevel, skeletonLevel, 1),
-                baseDamage: getScaledStat(typeof skeletonTemplate.baseDamage === 'number' ? skeletonTemplate.baseDamage : 5, damageIncreasePerLevel, skeletonLevel, 0),
-                baseArmor: getScaledStat(typeof skeletonTemplate.baseArmor === 'number' ? skeletonTemplate.baseArmor : 0, armorIncreasePerLevel, skeletonLevel, 0),
-                dropsGold: getEnemyGoldDrop(skeletonTemplate, skeletonLevel),
+                name: template.name,
+                behaviour: template.behaviour,
+                level: enemyLevel,
+                healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, enemyLevel, 1),
+                baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, enemyLevel, 0),
+                baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, enemyLevel, 0),
+                dropsGold: getEnemyGoldDrop(template, enemyLevel),
                 alive: true,
                 equippedWeapon: null,
                 equippedArmor: null
@@ -2180,7 +2193,7 @@
             return currentEnemy;
         }
 
-        function spawnCaveSkeletonAt(pos) {
+        function spawnCaveEnemyAt(pos) {
             if (!pos) {
                 return false;
             }
@@ -2189,10 +2202,15 @@
                 return false;
             }
 
-            var skeleton = createCaveSkeletonEncounter();
-            skeleton.pos = { x: pos.x, y: pos.y };
-            caveEnemies.push(skeleton);
-            addEvent('A ' + getEnemyDisplayName(skeleton) + ' rises from the shattered rock!');
+            var template = getRandomCaveEnemyTemplate();
+            if (!template) {
+                return false;
+            }
+
+            var caveEnemy = createCaveEnemyEncounter(template);
+            caveEnemy.pos = { x: pos.x, y: pos.y };
+            caveEnemies.push(caveEnemy);
+            addEvent('A ' + getEnemyDisplayName(caveEnemy) + ' rises from the shattered rock!');
             return true;
         }
 
@@ -2327,9 +2345,9 @@
                 delete caveGoldRockKeys[minedRockKey];
             }
 
-            if (caveSkeletonRockKeys[minedRockKey]) {
-                delete caveSkeletonRockKeys[minedRockKey];
-                spawnCaveSkeletonAt(nearbyRock);
+            if (caveEnemyRockKeys[minedRockKey]) {
+                delete caveEnemyRockKeys[minedRockKey];
+                spawnCaveEnemyAt(nearbyRock);
             }
 
             renderBattle();
@@ -3142,7 +3160,7 @@
                     } else if (caveExitDiscovered) {
                         battleInfo.textContent = 'The hidden exit has been revealed. Find the E tile to leave the cave.';
                     } else if (nearbyCaveEnemy) {
-                        battleInfo.textContent = 'A cave skeleton is nearby. Fight or move away.';
+                        battleInfo.textContent = 'A cave enemy is nearby. Fight or move away.';
                     } else {
                         battleInfo.textContent = onCaveRock ? 'A rock is next to you. Mine it.' : hasEquippedPickaxe() ? 'Inside the cave. Break rocks to uncover the hidden exit.' : 'Inside the cave. Equip a Pickaxe to mine rocks and uncover the hidden exit.';
                     }

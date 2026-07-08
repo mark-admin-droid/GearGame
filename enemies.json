@@ -2,6 +2,8 @@
   {
     "name": "Goblin",
     "behaviour": "active aggressive",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 1,
     "healthPoints": 20,
     "baseDamage": 10,
@@ -19,6 +21,8 @@
  {
     "name": "Skeleton",
     "behaviour": "active aggressive",
+   "spawnOnSurface": false,
+   "spawnsInCave": true,
     "baseLevel": 1,
     "healthPoints": 10,
     "baseDamage": 5,
@@ -36,6 +40,8 @@
   {
     "name": "Goblin Champion",
     "behaviour": "active aggressive",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 5,
     "healthPoints": 42,
     "baseDamage": 18,
@@ -53,6 +59,8 @@
   {
     "name": "Slime",
     "behaviour": "passive aggressive",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 1,
     "healthPoints": 16,
     "baseDamage": 5,
@@ -70,6 +78,8 @@
   {
     "name": "Bandit",
     "behaviour": "neutral",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 1,
     "healthPoints": 20,
     "baseDamage": 8,
@@ -87,6 +97,8 @@
   {
     "name": "Troll",
     "behaviour": "wandering aggressive",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 2,
     "healthPoints": 35,
     "baseDamage": 15,
@@ -104,6 +116,8 @@
   {
     "name": "Wolf",
     "behaviour": "wandering aggressive",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 1,
     "healthPoints": 16,
     "baseDamage": 8,
@@ -121,6 +135,8 @@
   {
     "name": "Rat",
     "behaviour": "neutral",
+    "spawnOnSurface": true,
+    "spawnsInCave": false,
     "baseLevel": 1,
     "healthPoints": 10,
     "baseDamage": 2,
