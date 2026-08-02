@@ -467,6 +467,15 @@
             color: #111;
         }
 
+        #freeHealButton {
+            margin-top: 10px;
+            padding: 6px 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
         .fleeButton {
             margin-top: 10px;
             padding: 6px 10px;
@@ -2877,8 +2886,19 @@
             }
 
             if (enemyTemplates && enemyTemplates.length > 0) {
+                var enemyNames = [];
                 for (var i = 0; i < enemyTemplates.length; i++) {
-                    var enemyName = enemyTemplates[i].name;
+                    if (enemyTemplates[i] && enemyTemplates[i].name) {
+                        enemyNames.push(enemyTemplates[i].name);
+                    }
+                }
+
+                enemyNames.sort(function(a, b) {
+                    return b.length - a.length;
+                });
+
+                for (var n = 0; n < enemyNames.length; n++) {
+                    var enemyName = enemyNames[n];
                     if (enemyName && formatted.indexOf(enemyName) !== -1) {
                         formatted = formatted.replace(new RegExp('\\b' + escapeRegex(enemyName) + '\\b', 'g'), '<span class="enemyLogName">' + enemyName + '</span>');
                     }
@@ -2987,7 +3007,7 @@
                 baseDamage = baseDamage + (enemy.equippedWeapon.properties.damage * weaponEfficiency);
             }
 
-            return baseDamage;
+            return Math.max(0, Math.ceil(baseDamage));
         }
 
         function getEnemyArmor(enemy) {
@@ -3002,7 +3022,7 @@
                 armor += enemy.equippedArmor.properties.armor * armorEfficiency;
             }
 
-            return armor;
+            return Math.max(0, Math.ceil(armor));
         }
 
         function showBattleActions(show) {
