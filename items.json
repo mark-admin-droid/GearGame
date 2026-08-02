@@ -6,10 +6,28 @@
     "properties": { "damage": 12, "armor": 0 }
   },
   {
-    "name": "Shield",
+    "name": "Round Shield",
     "slot": "off-hand",
     "price": 15,
     "properties": { "damage": 0, "armor": 5 }
+  },
+  {
+    "name": "Kite Shield",
+    "slot": "off-hand",
+    "price": 30,
+    "properties": { "damage": 0, "armor": 7 }
+  },
+  {
+    "name": "Spiky Shield",
+    "slot": "off-hand",
+    "price": 30,
+    "properties": { "damage": 2, "armor": 5 }
+  },
+  {
+    "name": "Pavise Shield",
+    "slot": "off-hand",
+    "price": 60,
+    "properties": { "damage": 0, "armor": 9 }
   },
   {
     "name": "Longbow",
@@ -18,16 +36,28 @@
     "properties": { "damage": 10, "armor": 0 }
   },
   {
-    "name": "Helmet",
+    "name": "Nasal Helmet",
     "slot": "head",
     "price": 10,
     "properties": { "damage": 0, "armor": 3 }
   },
   {
-    "name": "Belt",
+    "name": "Armet Helmet",
+    "slot": "head",
+    "price": 20,
+    "properties": { "damage": 0, "armor": 4 }
+  },
+  {
+    "name": "Leather Belt",
     "slot": "torso",
     "price": 10,
     "properties": { "damage": 0, "armor": 2 }
+  },
+  {
+    "name": "Plated Belt",
+    "slot": "torso",
+    "price": 20,
+    "properties": { "damage": 0, "armor": 3 }
   },
   {
     "name": "Full Plate Armor",
@@ -69,7 +99,7 @@
     "name": "Dagger",
     "slot": "main hand",
     "price": 7,
-    "properties": { "damage": 5, "armor": 0 }
+    "properties": { "damage": 5, "armor": 3 }
   },
   {
     "name": "Rusty Sword",

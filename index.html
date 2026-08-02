@@ -575,6 +575,7 @@
             <div class="box">
                 <h2 id="vendorHeading">Shop</h2>
                 <ul id="shopList"></ul>
+                <button id="freeHealButton" class="gameButton" onclick="useDruidFreeHeal()" style="display:none;">Free heal (50% HP)</button>
                 <div id="warningMessage" class="warning"></div>
             </div>
 
@@ -807,6 +808,10 @@
                 return false;
             }
             return !!(item.properties.permanentHealthPoints || item.properties.permanentBaseDamage || item.properties.permanentBaseArmor);
+        }
+
+        function canUseDruidFreeHealToday() {
+            return druidHealDay !== currentDay;
         }
 
         function getHealthPotionRestoreAmount(item) {
@@ -1194,9 +1199,38 @@
             }
         }
 
+        function useDruidFreeHeal() {
+            if (gameOver || activeVendor !== 'druid') {
+                return;
+            }
+
+            var warningMessage = document.getElementById('warningMessage');
+            if (!canUseDruidFreeHealToday()) {
+                if (warningMessage) {
+                    warningMessage.textContent = 'Free heal already used today. Come back tomorrow.';
+                }
+                showShop();
+                return;
+            }
+
+            var healAmount = Math.max(1, Math.round(heroStats.healthPoints * 0.5));
+            var oldHealth = heroStats.currentHealth;
+            heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + healAmount);
+            druidHealDay = currentDay;
+
+            if (warningMessage) {
+                warningMessage.textContent = '';
+            }
+
+            addEvent('Druid grants free healing: +' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ').');
+            showInventory();
+            showShop();
+        }
+
         function showShop() {
             var shopList = document.getElementById('shopList');
             var vendorHeading = document.getElementById('vendorHeading');
+            var freeHealButton = document.getElementById('freeHealButton');
             shopList.innerHTML = '';
 
             if (vendorHeading) {
@@ -1210,6 +1244,17 @@
                 var li = document.createElement('li');
                 li.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br><span class="itemStatsSmall">' + getItemStatsText(item) + '</span></span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
                 shopList.appendChild(li);
+            }
+
+            if (freeHealButton) {
+                if (activeVendor === 'druid') {
+                    var canFreeHeal = canUseDruidFreeHealToday();
+                    freeHealButton.style.display = 'inline-block';
+                    freeHealButton.disabled = !canFreeHeal;
+                    freeHealButton.textContent = canFreeHeal ? 'Free heal (50% HP)' : 'Free heal used today';
+                } else {
+                    freeHealButton.style.display = 'none';
+                }
             }
         }
 
