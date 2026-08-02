@@ -118,5 +118,17 @@
     "slot": "consumable",
     "price": 50,
     "properties": { "damage": 0, "armor": 0, "healthPercentsRestores": 50 }
+  },
+  {
+    "name": "Potion of Might",
+    "slot": "consumable",
+    "price": 100,
+    "properties": { "damage": 0, "armor": 0, "permanentHealthPoints": 1, "permanentBaseDamage": 1 }
+  },
+  {
+    "name": "Dragon Hide powder",
+    "slot": "consumable",
+    "price": 100,
+    "properties": { "damage": 0, "armor": 0, "permanentBaseArmor": 1 }
   }
 ]

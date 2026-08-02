@@ -573,7 +573,7 @@
         <button id="backToAdventureButton" class="gameButton" onclick="returnToAdventure()" style="display:none;">Back to Adventure</button>
         <div class="container">
             <div class="box">
-                <h2>Shop</h2>
+                <h2 id="vendorHeading">Shop</h2>
                 <ul id="shopList"></ul>
                 <div id="warningMessage" class="warning"></div>
             </div>
@@ -647,6 +647,7 @@
 
     <script>
         var shopItems = [];
+        var druidItems = [];
         var inventory = [];
         var gold = 0;
         var mapSize = 20;
@@ -707,6 +708,7 @@
         var pendingShopSurvivalAdvance = false;
         var pendingShopEnemyCount = 0;
         var isShopOpen = true;
+        var activeVendor = 'shop';
         var heroLevel = 1;
         var heroExperience = 0;
         var heroNextLevelXp = 5;
@@ -796,6 +798,17 @@
             return !!(item && item.name === 'Health potion' && item.properties && typeof item.properties.healthPercentsRestores === 'number' && item.properties.healthPercentsRestores > 0);
         }
 
+        function isConsumableItem(item) {
+            return !!(item && item.slot === 'consumable');
+        }
+
+        function isPermanentConsumableItem(item) {
+            if (!isConsumableItem(item) || !item.properties) {
+                return false;
+            }
+            return !!(item.properties.permanentHealthPoints || item.properties.permanentBaseDamage || item.properties.permanentBaseArmor);
+        }
+
         function getHealthPotionRestoreAmount(item) {
             if (!isHealthPotionItem(item)) {
                 return 0;
@@ -879,6 +892,22 @@
             heroExperience = 0;
             heroNextLevelXp = getNextLevelXp(heroLevel);
             applyHeroLevelStats(true);
+        }
+
+        function applyPermanentHeroBaseStats(healthBonus, damageBonus, armorBonus) {
+            var healthDelta = typeof healthBonus === 'number' ? healthBonus : 0;
+            var damageDelta = typeof damageBonus === 'number' ? damageBonus : 0;
+            var armorDelta = typeof armorBonus === 'number' ? armorBonus : 0;
+            var oldMaxHealth = heroStats.healthPoints;
+            var oldCurrentHealth = heroStats.currentHealth;
+
+            heroBaseStats.healthPoints = Math.max(1, heroBaseStats.healthPoints + healthDelta);
+            heroBaseStats.baseDamage = Math.max(0, heroBaseStats.baseDamage + damageDelta);
+            heroBaseStats.baseArmor = Math.max(0, heroBaseStats.baseArmor + armorDelta);
+            applyHeroLevelStats(false);
+
+            var gainedMaxHealth = Math.max(0, heroStats.healthPoints - oldMaxHealth);
+            heroStats.currentHealth = Math.min(heroStats.healthPoints, oldCurrentHealth + gainedMaxHealth);
         }
 
         function gainHeroExperience(amount) {
@@ -1002,6 +1031,7 @@
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
             isShopOpen = true;
+            activeVendor = 'shop';
 
             document.getElementById('warningMessage').textContent = '';
             document.getElementById('battleInfo').textContent = '';
@@ -1011,6 +1041,7 @@
             showBattleActions(false);
 
             shopItems = getRandomShopItems(allItems, shopItemTargetCount);
+            druidItems = getDruidStockItems(allItems);
             showShop();
             showInventory();
         }
@@ -1069,8 +1100,13 @@
         }
 
         function buyItem(index) {
-            var item = shopItems[index];
+            var sourceItems = activeVendor === 'druid' ? druidItems : shopItems;
+            var item = sourceItems[index];
             var warningMessage = document.getElementById('warningMessage');
+
+            if (!item) {
+                return;
+            }
 
             if (gold >= item.price) {
                 gold = gold - item.price;
@@ -1081,7 +1117,7 @@
                     updateHorseState();
                 }
 
-                shopItems.splice(index, 1);
+                sourceItems.splice(index, 1);
                 warningMessage.textContent = '';
                 showShop();
                 showInventory();
@@ -1104,15 +1140,73 @@
                 text += 'Armour ' + item.properties.armor;
             }
 
+            if (item.properties.healthPercentsRestores > 0) {
+                if (text !== '') {
+                    text += ' / ';
+                }
+                text += 'Restores ' + item.properties.healthPercentsRestores + '% HP';
+            }
+
+            if (item.properties.permanentHealthPoints > 0 || item.properties.permanentBaseDamage > 0 || item.properties.permanentBaseArmor > 0) {
+                var permanentParts = [];
+                if (item.properties.permanentHealthPoints > 0) {
+                    permanentParts.push('+' + item.properties.permanentHealthPoints + ' Max HP');
+                }
+                if (item.properties.permanentBaseDamage > 0) {
+                    permanentParts.push('+' + item.properties.permanentBaseDamage + ' Base Damage');
+                }
+                if (item.properties.permanentBaseArmor > 0) {
+                    permanentParts.push('+' + item.properties.permanentBaseArmor + ' Base Armor');
+                }
+                if (text !== '') {
+                    text += ' / ';
+                }
+                text += 'Permanent: ' + permanentParts.join(', ');
+            }
+
             return text;
+        }
+
+        function usePermanentConsumable(index) {
+            if (gameOver) {
+                return;
+            }
+
+            if (typeof index !== 'number' || index < 0 || index >= inventory.length) {
+                return;
+            }
+
+            var item = inventory[index];
+            if (!isPermanentConsumableItem(item)) {
+                return;
+            }
+
+            var hpBonus = item.properties.permanentHealthPoints || 0;
+            var damageBonus = item.properties.permanentBaseDamage || 0;
+            var armorBonus = item.properties.permanentBaseArmor || 0;
+            applyPermanentHeroBaseStats(hpBonus, damageBonus, armorBonus);
+            inventory.splice(index, 1);
+            addEvent('Hero uses ' + item.name + ' and gains permanent power.');
+            showInventory();
+
+            if (!isShopOpen) {
+                renderBattle();
+            }
         }
 
         function showShop() {
             var shopList = document.getElementById('shopList');
+            var vendorHeading = document.getElementById('vendorHeading');
             shopList.innerHTML = '';
 
-            for (var i = 0; i < shopItems.length; i++) {
-                var item = shopItems[i];
+            if (vendorHeading) {
+                vendorHeading.textContent = activeVendor === 'druid' ? 'Druid House' : 'Shop';
+            }
+
+            var sourceItems = activeVendor === 'druid' ? druidItems : shopItems;
+
+            for (var i = 0; i < sourceItems.length; i++) {
+                var item = sourceItems[i];
                 var li = document.createElement('li');
                 li.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br><span class="itemStatsSmall">' + getItemStatsText(item) + '</span></span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
                 shopList.appendChild(li);
@@ -1241,6 +1335,8 @@
                 var actionButtonHtml = '';
                 if (isHealthPotionItem(item)) {
                     actionButtonHtml = '<button onclick="drinkHealthPotion(' + i + ')">Drink to restore ' + getHealthPotionRestoreAmount(item) + ' HP</button>';
+                } else if (isPermanentConsumableItem(item)) {
+                    actionButtonHtml = '<button onclick="usePermanentConsumable(' + i + ')">Use</button>';
                 } else {
                     actionButtonHtml = '<button onclick="equipItem(' + i + ')">Equip</button>';
                 }
@@ -1406,7 +1502,9 @@
 
         function getRandomShopItems(items, count) {
             var result = [];
-            var source = (items || []).slice();
+            var source = (items || []).filter(function(item) {
+                return item && !isConsumableItem(item);
+            });
             var maxCount = Math.min(count, source.length);
 
             for (var i = 0; i < maxCount; i++) {
@@ -1417,7 +1515,7 @@
 
             var requiredItems = [];
             for (var j = 0; j < items.length; j++) {
-                if (items[j] && (items[j].name === 'Axe' || items[j].name === 'Pickaxe')) {
+                if (items[j] && !isConsumableItem(items[j]) && (items[j].name === 'Axe' || items[j].name === 'Pickaxe')) {
                     requiredItems.push(items[j]);
                 }
             }
@@ -1438,6 +1536,16 @@
             }
 
             return result;
+        }
+
+        function getDruidStockItems(items) {
+            var stock = [];
+            for (var i = 0; i < items.length; i++) {
+                if (isConsumableItem(items[i])) {
+                    stock.push(items[i]);
+                }
+            }
+            return stock;
         }
 
         function refillShopToTargetCount() {
@@ -1466,7 +1574,9 @@
                 }
 
                 if (candidates.length === 0) {
-                    candidates = allItems.slice();
+                    candidates = allItems.filter(function(item) {
+                        return item && !isConsumableItem(item);
+                    });
                 }
 
                 shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
@@ -1614,6 +1724,8 @@
                 healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, level, 1),
                 baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, level, 0),
                 baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, level, 0),
+                weaponEfficiency: typeof template.weaponEfficiency === 'number' ? template.weaponEfficiency : 1,
+                armorEfficiency: typeof template.armorEfficiency === 'number' ? template.armorEfficiency : 1,
                 dropsGold: getEnemyGoldDrop(template, level),
                 pos: enemyPos,
                 alive: true,
@@ -1645,28 +1757,7 @@
             }
 
             refillShopToTargetCount();
-
-            var healthPotionItem = null;
-            for (var a = 0; a < allItems.length; a++) {
-                if (allItems[a] && allItems[a].name === 'Health potion') {
-                    healthPotionItem = allItems[a];
-                    break;
-                }
-            }
-
-            if (healthPotionItem) {
-                var hasHealthPotion = false;
-                for (var p = 0; p < shopItems.length; p++) {
-                    if (shopItems[p] && shopItems[p].name === 'Health potion') {
-                        hasHealthPotion = true;
-                        break;
-                    }
-                }
-
-                if (!hasHealthPotion && shopItems.length > 0) {
-                    shopItems[shopItems.length - 1] = healthPotionItem;
-                }
-            }
+            druidItems = getDruidStockItems(allItems);
 
             showShop();
         }
@@ -1676,10 +1767,47 @@
             survivalEnemyCount = nextEnemyCount;
             currentDay += 1;
             refreshShopForNewDay();
+            maybeSpawnDailyTreasure();
             spawnEnemyWave(nextEnemyCount);
             addRandomTrees(dailyTreeGrowth, [heroPos, shopPos].concat(druidHouseCells, treasureCells.map(function(t) { return t.pos; }), treeCells, woodBlockCells, caveCells, enemies.filter(function(enemy) { return enemy && enemy.alive; }).map(function(enemy) { return enemy.pos; })));
             addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land, and new trees spread across the wilds.');
             updateAdventureTitle();
+        }
+
+        function maybeSpawnDailyTreasure() {
+            if (Math.random() >= 0.5) {
+                return;
+            }
+
+            var blockedCells = [heroPos, shopPos].concat(druidHouseCells, treeCells, woodBlockCells, stoneBlockCells, caveCells);
+
+            for (var i = 0; i < enemies.length; i++) {
+                if (enemies[i] && enemies[i].alive) {
+                    blockedCells.push(enemies[i].pos);
+                }
+            }
+
+            for (var t = 0; t < treasureCells.length; t++) {
+                if (treasureCells[t] && treasureCells[t].pos) {
+                    blockedCells.push(treasureCells[t].pos);
+                }
+            }
+
+            var treasurePos = getRandomCell();
+            var treasureBlocked = false;
+            while (!treasureBlocked) {
+                treasureBlocked = true;
+                for (var b = 0; b < blockedCells.length; b++) {
+                    if (blockedCells[b].x === treasurePos.x && blockedCells[b].y === treasurePos.y) {
+                        treasurePos = getRandomCell();
+                        treasureBlocked = false;
+                        break;
+                    }
+                }
+            }
+
+            treasureCells.push({ pos: treasurePos, gold: 10 + Math.floor(Math.random() * 11) });
+            addEvent('A new treasure chest appears somewhere on the map.');
         }
 
         function getEndGameMessage() {
@@ -2307,6 +2435,8 @@
                 healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, enemyLevel, 1),
                 baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, enemyLevel, 0),
                 baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, enemyLevel, 0),
+                weaponEfficiency: typeof template.weaponEfficiency === 'number' ? template.weaponEfficiency : 1,
+                armorEfficiency: typeof template.armorEfficiency === 'number' ? template.armorEfficiency : 1,
                 dropsGold: getEnemyGoldDrop(template, enemyLevel),
                 alive: true,
                 equippedWeapon: null,
@@ -2532,7 +2662,6 @@
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !gameOver;
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !gameOver;
             var onCave = !!getAdjacentCaveCell(heroPos) && !gameOver;
-            var canUseDruid = canUseDruidHouseToday();
             var onTreasure = !!getNearbyTreasure(heroPos) && !gameOver;
 
             if (battleScreen) {
@@ -2545,7 +2674,7 @@
             }
             fleeButton.style.display = 'none';
             shopButton.style.display = onShop ? 'inline-block' : 'none';
-            druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
+            druidHouseButton.style.display = onDruidHouse ? 'inline-block' : 'none';
             chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
             buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
             buildButton.disabled = !logCells || logCells.length === 0;
@@ -2564,7 +2693,7 @@
             } else if (onShop) {
                 battleInfo.textContent = 'You are at the shop. Enter to browse gear.';
             } else if (onDruidHouse) {
-                battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 50% of max HP.' : 'The druid house already healed you today. Return tomorrow.';
+                battleInfo.textContent = 'The druid house is right next to you. Enter to buy consumables.';
             } else if (onTreeWithAxe) {
                 battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
             } else if (onCave) {
@@ -2658,27 +2787,6 @@
             refreshExplorationUi();
         }
 
-        function canUseDruidHouseToday() {
-            return druidHealDay !== currentDay;
-        }
-
-        function visitDruidHouse() {
-            if (!canUseDruidHouseToday()) {
-                addEvent('The druid house is closed to you for today. Return tomorrow.');
-                renderBattle();
-                return false;
-            }
-
-            addEvent('Hero enters the druid house and is touched by green energy.');
-            var healAmount = Math.max(1, Math.round(heroStats.healthPoints * 0.5));
-            var oldHealth = heroStats.currentHealth;
-            heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + healAmount);
-            druidHealDay = currentDay;
-            addEvent('Druid heals hero for ' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ')');
-            renderBattle();
-            return true;
-        }
-
         function enterDruidHouse() {
             if (gameOver || battleActive) {
                 return;
@@ -2689,7 +2797,8 @@
                 return;
             }
 
-            visitDruidHouse();
+            addEvent('Hero enters the druid house.');
+            showShopView('druid');
         }
 
         function visitTreasure(pos) {
@@ -2829,7 +2938,8 @@
             }
 
             if (enemy.equippedWeapon && enemy.equippedWeapon.properties && enemy.equippedWeapon.properties.damage) {
-                baseDamage = baseDamage + enemy.equippedWeapon.properties.damage;
+                var weaponEfficiency = typeof enemy.weaponEfficiency === 'number' ? enemy.weaponEfficiency : 1;
+                baseDamage = baseDamage + (enemy.equippedWeapon.properties.damage * weaponEfficiency);
             }
 
             return baseDamage;
@@ -2843,7 +2953,8 @@
             }
 
             if (enemy && enemy.equippedArmor && enemy.equippedArmor.properties && enemy.equippedArmor.properties.armor) {
-                armor += enemy.equippedArmor.properties.armor;
+                var armorEfficiency = typeof enemy.armorEfficiency === 'number' ? enemy.armorEfficiency : 1;
+                armor += enemy.equippedArmor.properties.armor * armorEfficiency;
             }
 
             return armor;
@@ -2867,7 +2978,7 @@
                     addEvent('The road is clear. The shop feels like a brief calm before the next wave.');
                 }
                 addEvent('Hero enters the shop.');
-                showShopView();
+                showShopView('shop');
             }
         }
 
@@ -3053,9 +3164,7 @@
             } else if (isSameCell(heroPos, shopPos)) {
                 addEvent('Turn ' + turnNumber + '. Hero reached the shop. Use Enter Shop to browse gear.');
             } else if (isDruidHouseCell(heroPos)) {
-                addEvent('Turn ' + turnNumber + '. Hero reaches the druid house');
-                visitDruidHouse();
-                return;
+                addEvent('Turn ' + turnNumber + '. Hero reached the druid house. Use Enter Druid House to browse consumables.');
             } else {
                 var treasure = getTreasureAt(heroPos);
                 if (treasure) {
@@ -3210,7 +3319,6 @@
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !battleActive && !gameOver;
             var onCave = !!getAdjacentCaveCell(heroPos) && !battleActive && !gameOver;
             var onCaveRock = !!getAdjacentCaveRockCell(caveHeroPos) && hasEquippedPickaxe() && inCave && !battleActive && !gameOver;
-            var canUseDruid = canUseDruidHouseToday();
             var onTreasure = !!getNearbyTreasure(heroPos) && !battleActive && !gameOver;
 
             if (gameOver) {
@@ -3262,7 +3370,7 @@
                 showBattleMap(false);
             } else {
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
-                druidHouseButton.style.display = onDruidHouse && canUseDruid ? 'inline-block' : 'none';
+                druidHouseButton.style.display = onDruidHouse ? 'inline-block' : 'none';
                 chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
                 buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
                 buildButton.disabled = !logCells || logCells.length === 0;
@@ -3339,7 +3447,7 @@
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
                 } else if (onDruidHouse) {
-                    battleInfo.textContent = canUseDruid ? 'The druid house is right next to you. Enter to restore 50% of max HP.' : 'The druid house already healed you today. Return tomorrow.';
+                    battleInfo.textContent = 'The druid house is right next to you. Enter to buy consumables.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -3367,10 +3475,17 @@
             }
         }
 
-        function showShopView() {
+        function showShopView(vendorType) {
             var mainView = document.getElementById('mainView');
             var shopBox = mainView.querySelector('.container .box:first-child');
             var inventoryBox = mainView.querySelector('.container .box:last-child');
+            var pageTitle = document.getElementById('pageTitle');
+
+            activeVendor = vendorType === 'druid' ? 'druid' : 'shop';
+
+            if (pageTitle) {
+                pageTitle.textContent = activeVendor === 'druid' ? 'Druid House' : 'Gear Shop';
+            }
 
             if (shopBox) {
                 shopBox.style.display = 'block';
@@ -3384,6 +3499,7 @@
             document.getElementById('deathScreen').style.display = 'none';
             document.getElementById('backToAdventureButton').style.display = 'inline-block';
             isShopOpen = true;
+            showShop();
             showInventory();
         }
 
@@ -3434,6 +3550,7 @@
             document.getElementById('deathScreen').style.display = 'none';
             document.getElementById('backToAdventureButton').style.display = 'none';
             isShopOpen = false;
+            activeVendor = 'shop';
             renderBattle();
         }
 
@@ -3465,6 +3582,7 @@
             survivalEnemyCount = startingSurvivalEnemyCount;
             pendingShopSurvivalAdvance = false;
             pendingShopEnemyCount = 0;
+            activeVendor = 'shop';
             updateAdventureTitle();
             var blockedCells = [heroPos].concat(caveCells);
 
@@ -3629,6 +3747,7 @@
                     survivalEnemyCount = startingSurvivalEnemyCount;
 
                     shopItems = getRandomShopItems(allItems, 10);
+                    druidItems = getDruidStockItems(allItems);
                     shopItemTargetCount = 10;
 
                     enemyTemplates = allEnemies;
