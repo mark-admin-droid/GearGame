@@ -82,6 +82,13 @@
             background: #2e9e44;
         }
 
+        .startButtons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         #adventureButton,
         #backToAdventureButton {
             background: #365ea8;
@@ -574,7 +581,11 @@
         <h1>Welcome</h1>
         <p id="welcomeMessage"></p>
         <p id="welcomeTip"></p>
-        <button id="startButton" class="startButton gameButton" onclick="startGameFromWelcome()">Start</button>
+        <div class="startButtons">
+            <button id="startEasyButton" class="startButton gameButton" onclick="startGameFromWelcome('easy')">Easy</button>
+            <button id="startNormalButton" class="startButton gameButton" onclick="startGameFromWelcome('normal')">Normal</button>
+            <button id="startHardButton" class="startButton gameButton" onclick="startGameFromWelcome('hard')">Hard</button>
+        </div>
     </div>
 
     <div id="mainView" class="screenCard mainScreen" style="display:none;">
@@ -727,6 +738,7 @@
         var enemyMoveTimeoutId = null;
         var enemyMoveDelayMs = 500;
         var isFreshDataMode = false;
+        var currentGameMode = 'normal';
         var heroScaling = {
             baseLevel: 1,
             healthIncreasePerLevel: 1,
@@ -765,10 +777,71 @@
             return tipsMessages[Math.floor(Math.random() * tipsMessages.length)];
         }
 
+        function normalizeGameMode(modeValue) {
+            var mode = (modeValue || '').toLowerCase();
+            if (mode === 'easy' || mode === 'hard' || mode === 'normal') {
+                return mode;
+            }
+            return 'normal';
+        }
+
+        function getModeFromUrl() {
+            return normalizeGameMode(new URLSearchParams(window.location.search).get('mode'));
+        }
+
+        function setModeInUrl(mode) {
+            var params = new URLSearchParams(window.location.search);
+            params.set('mode', normalizeGameMode(mode));
+            var query = params.toString();
+            var nextUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+            window.history.replaceState(null, '', nextUrl);
+        }
+
+        function getEnemyDifficultyMultiplier() {
+            if (currentGameMode === 'easy') {
+                return 0.5;
+            }
+            if (currentGameMode === 'hard') {
+                return 1.25;
+            }
+            return 1;
+        }
+
+        function scaleEnemyStatForDifficulty(statValue, minimum) {
+            var baseValue = typeof statValue === 'number' ? statValue : 0;
+            var minValue = typeof minimum === 'number' ? minimum : 0;
+            return Math.max(minValue, Math.round(baseValue * getEnemyDifficultyMultiplier()));
+        }
+
+        function setStartButtonsDisabled(disabled, loadingText) {
+            var easyButton = document.getElementById('startEasyButton');
+            var normalButton = document.getElementById('startNormalButton');
+            var hardButton = document.getElementById('startHardButton');
+            var buttons = [easyButton, normalButton, hardButton];
+
+            for (var i = 0; i < buttons.length; i++) {
+                if (!buttons[i]) {
+                    continue;
+                }
+
+                buttons[i].disabled = !!disabled;
+                if (disabled && loadingText) {
+                    buttons[i].textContent = loadingText;
+                } else if (buttons[i] === easyButton) {
+                    buttons[i].textContent = 'Easy';
+                } else if (buttons[i] === normalButton) {
+                    buttons[i].textContent = 'Normal';
+                } else if (buttons[i] === hardButton) {
+                    buttons[i].textContent = 'Hard';
+                }
+            }
+        }
+
         function showStartScreen() {
-            var startButton = document.getElementById('startButton');
             var welcomeMessage = document.getElementById('welcomeMessage');
             var welcomeTip = document.getElementById('welcomeTip');
+
+            currentGameMode = getModeFromUrl();
 
             document.getElementById('startScreen').style.display = 'block';
             document.getElementById('pageTitle').style.display = 'none';
@@ -778,8 +851,7 @@
             document.getElementById('deathScreen').style.display = 'none';
 
             if (!isGameDataLoaded) {
-                startButton.disabled = true;
-                startButton.textContent = 'Loading...';
+                setStartButtonsDisabled(true, 'Loading...');
                 if (!welcomeMessage.textContent) {
                     welcomeMessage.textContent = 'Loading game data from JSON files...';
                 }
@@ -789,8 +861,7 @@
                 return;
             }
 
-            startButton.disabled = false;
-            startButton.textContent = 'Start';
+            setStartButtonsDisabled(false);
             welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
             if (welcomeTip) {
                 welcomeTip.textContent = 'Tip: ' + getRandomTipMessage();
@@ -940,10 +1011,13 @@
             }
         }
 
-        function startGameFromWelcome() {
+        function startGameFromWelcome(mode) {
             if (!isGameDataLoaded) {
                 return;
             }
+
+            currentGameMode = normalizeGameMode(typeof mode === 'string' ? mode : getModeFromUrl());
+            setModeInUrl(currentGameMode);
 
             var mainView = document.getElementById('mainView');
             var shopBox = mainView.querySelector('.container .box:first-child');
@@ -1775,9 +1849,9 @@
                 name: template.name,
                 behaviour: template.behaviour,
                 level: level,
-                healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, level, 1),
-                baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, level, 0),
-                baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, level, 0),
+                healthPoints: scaleEnemyStatForDifficulty(getScaledStat(template.healthPoints, healthIncreasePerLevel, level, 1), 1),
+                baseDamage: scaleEnemyStatForDifficulty(getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, level, 0), 0),
+                baseArmor: scaleEnemyStatForDifficulty(getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, level, 0), 0),
                 weaponEfficiency: typeof template.weaponEfficiency === 'number' ? template.weaponEfficiency : 1,
                 armorEfficiency: typeof template.armorEfficiency === 'number' ? template.armorEfficiency : 1,
                 dropsGold: getEnemyGoldDrop(template, level),
@@ -2486,9 +2560,9 @@
                 name: template.name,
                 behaviour: template.behaviour,
                 level: enemyLevel,
-                healthPoints: getScaledStat(template.healthPoints, healthIncreasePerLevel, enemyLevel, 1),
-                baseDamage: getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, enemyLevel, 0),
-                baseArmor: getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, enemyLevel, 0),
+                healthPoints: scaleEnemyStatForDifficulty(getScaledStat(template.healthPoints, healthIncreasePerLevel, enemyLevel, 1), 1),
+                baseDamage: scaleEnemyStatForDifficulty(getScaledStat(typeof template.baseDamage === 'number' ? template.baseDamage : 5, damageIncreasePerLevel, enemyLevel, 0), 0),
+                baseArmor: scaleEnemyStatForDifficulty(getScaledStat(typeof template.baseArmor === 'number' ? template.baseArmor : 0, armorIncreasePerLevel, enemyLevel, 0), 0),
                 weaponEfficiency: typeof template.weaponEfficiency === 'number' ? template.weaponEfficiency : 1,
                 armorEfficiency: typeof template.armorEfficiency === 'number' ? template.armorEfficiency : 1,
                 dropsGold: getEnemyGoldDrop(template, enemyLevel),
@@ -3754,6 +3828,7 @@
         function loadItems() {
             isGameDataLoaded = false;
             isFreshDataMode = new URLSearchParams(window.location.search).get('fresh') === '1';
+            currentGameMode = getModeFromUrl();
             Promise.all([
                 fetchJsonDynamic('items.json'),
                 fetchJsonDynamic('enemies.json'),
@@ -3829,13 +3904,9 @@
                     gold = startingGold;
                     isGameDataLoaded = true;
 
-                    var startButton = document.getElementById('startButton');
                     var welcomeMessage = document.getElementById('welcomeMessage');
                     var welcomeTip = document.getElementById('welcomeTip');
-                    if (startButton) {
-                        startButton.disabled = false;
-                        startButton.textContent = 'Start';
-                    }
+                    setStartButtonsDisabled(false);
                     if (welcomeMessage) {
                         welcomeMessage.textContent = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
                     }
@@ -3852,15 +3923,11 @@
                     enemyTemplates = [];
                     shopItems = [];
 
-                    var startButton = document.getElementById('startButton');
                     var welcomeMessage = document.getElementById('welcomeMessage');
                     var welcomeTip = document.getElementById('welcomeTip');
                     var warningMessage = document.getElementById('warningMessage');
 
-                    if (startButton) {
-                        startButton.disabled = true;
-                        startButton.textContent = 'Start';
-                    }
+                    setStartButtonsDisabled(true);
                     if (welcomeMessage) {
                         welcomeMessage.textContent = 'Could not load game data. Check items.json, enemies.json and hero.json.';
                     }
