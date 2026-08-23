@@ -144,6 +144,12 @@
     "properties": { "damage": 6, "armor": 0 }
   },
   {
+    "name": "Horn",
+    "slot": "off-hand",
+    "price": 5,
+    "properties": { "damage": 0, "armor": 0 }
+  },
+  {
     "name": "Health potion",
     "slot": "consumable",
     "price": 50,
