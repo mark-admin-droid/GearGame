@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Gear Game - Stats</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #111;
+            background: linear-gradient(180deg, #f2efe7 0%, #ece7da 100%);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .backLink {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: #666;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .backLink:hover {
+            text-decoration: underline;
+        }
+
+        .statsSection {
+            margin-bottom: 32px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+            background: #f9f6ee;
+            box-shadow: 0 4px 12px rgba(70, 54, 30, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            background: #e6ddc8;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f2efe4;
+        }
+
+        .loadError {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <a class="backLink" href="index.html">&larr; Back to Game</a>
+    <h1>Gear Game - Stats</h1>
+    <div id="statsContainer">
+        <p>Loading stats...</p>
+    </div>
+
+    <script>
+        function fetchJsonFresh(path) {
+            return fetch(path + '?t=' + Date.now(), { cache: 'no-store' }).then(function(response) {
+                if (!response.ok) {
+                    throw new Error(path + ' failed to load (HTTP ' + response.status + ').');
+                }
+                return response.json();
+            });
+        }
+
+        function getScaledStat(baseValue, increasePerLevel, level, minimum) {
+            var minValue = typeof minimum === 'number' ? minimum : 0;
+            var safeBase = typeof baseValue === 'number' ? baseValue : minValue;
+            var safeIncrease = typeof increasePerLevel === 'number' && increasePerLevel > 0 ? increasePerLevel : 1;
+            var safeLevel = Math.max(1, typeof level === 'number' ? level : 1);
+            return Math.max(minValue, Math.round(safeBase * Math.pow(safeIncrease, safeLevel - 1)));
+        }
+
+        function createTable(columns, rows) {
+            var table = document.createElement('table');
+            var thead = document.createElement('thead');
+            var headRow = document.createElement('tr');
+            columns.forEach(function(column) {
+                var th = document.createElement('th');
+                th.textContent = column;
+                headRow.appendChild(th);
+            });
+            thead.appendChild(headRow);
+            table.appendChild(thead);
+
+            var tbody = document.createElement('tbody');
+            rows.forEach(function(row) {
+                var tr = document.createElement('tr');
+                row.forEach(function(cell) {
+                    var td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            return table;
+        }
+
+        function addSection(container, title, columns, rows) {
+            var section = document.createElement('div');
+            section.className = 'statsSection';
+
+            var heading = document.createElement('h2');
+            heading.textContent = title;
+            section.appendChild(heading);
+
+            section.appendChild(createTable(columns, rows));
+            container.appendChild(section);
+        }
+
+        function buildOffensiveItemsRows(items) {
+            return items
+                .filter(function(item) {
+                    return item.properties && item.properties.damage > 0 && item.price > 0;
+                })
+                .map(function(item) {
+                    var damagePerGold = item.properties.damage / item.price;
+                    return {
+                        name: item.name,
+                        slot: item.slot,
+                        price: item.price,
+                        damage: item.properties.damage,
+                        damagePerGold: damagePerGold
+                    };
+                })
+                .sort(function(a, b) {
+                    return b.damagePerGold - a.damagePerGold;
+                })
+                .map(function(item) {
+                    return [item.name, item.slot, item.price, item.damage, item.damagePerGold.toFixed(3)];
+                });
+        }
+
+        function buildDefensiveItemsRows(items) {
+            return items
+                .filter(function(item) {
+                    return item.properties && item.properties.armor > 0 && item.price > 0;
+                })
+                .map(function(item) {
+                    var armorPerGold = item.properties.armor / item.price;
+                    return {
+                        name: item.name,
+                        slot: item.slot,
+                        price: item.price,
+                        armor: item.properties.armor,
+                        armorPerGold: armorPerGold
+                    };
+                })
+                .sort(function(a, b) {
+                    return b.armorPerGold - a.armorPerGold;
+                })
+                .map(function(item) {
+                    return [item.name, item.slot, item.price, item.armor, item.armorPerGold.toFixed(3)];
+                });
+        }
+
+        function buildMonsterRows(enemyTemplates) {
+            return enemyTemplates
+                .map(function(template) {
+                    var healthIncreasePerLevel = typeof template.healthIncreasePerLevel === 'number' ? template.healthIncreasePerLevel : 1;
+                    var damageIncreasePerLevel = typeof template.damageIncreasePerLevel === 'number' ? template.damageIncreasePerLevel : 1;
+                    var armorIncreasePerLevel = typeof template.armorIncreasePerLevel === 'number' ? template.armorIncreasePerLevel : 1;
+
+                    return [
+                        template.name,
+                        getScaledStat(template.healthPoints, healthIncreasePerLevel, 1, 1),
+                        getScaledStat(template.baseDamage, damageIncreasePerLevel, 1, 0),
+                        getScaledStat(template.baseArmor, armorIncreasePerLevel, 1, 0),
+                        getScaledStat(template.healthPoints, healthIncreasePerLevel, 10, 1),
+                        getScaledStat(template.baseDamage, damageIncreasePerLevel, 10, 0),
+                        getScaledStat(template.baseArmor, armorIncreasePerLevel, 10, 0)
+                    ];
+                });
+        }
+
+        function buildSpellRows(spells) {
+            return spells.map(function(spell) {
+                return [
+                    spell.name,
+                    spell.source,
+                    spell.learningPrice,
+                    spell.castPrice,
+                    spell.damage,
+                    spell.canBeUsedOnMap ? 'Yes' : 'No'
+                ];
+            });
+        }
+
+        function loadStats() {
+            var container = document.getElementById('statsContainer');
+
+            Promise.all([
+                fetchJsonFresh('items.json'),
+                fetchJsonFresh('enemies.json'),
+                fetchJsonFresh('spells.json')
+            ]).then(function(results) {
+                var items = results[0];
+                var enemies = results[1];
+                var spells = results[2];
+
+                container.innerHTML = '';
+
+                addSection(container, 'Offensive Items (sorted by damage per gold)',
+                    ['Name', 'Slot', 'Price', 'Damage', 'Damage per Gold'],
+                    buildOffensiveItemsRows(items));
+
+                addSection(container, 'Defensive Items (sorted by armor per gold)',
+                    ['Name', 'Slot', 'Price', 'Armor', 'Armor per Gold'],
+                    buildDefensiveItemsRows(items));
+
+                addSection(container, 'Monsters',
+                    ['Name', 'HP (Lvl 1)', 'Damage (Lvl 1)', 'Armor (Lvl 1)', 'HP (Lvl 10)', 'Damage (Lvl 10)', 'Armor (Lvl 10)'],
+                    buildMonsterRows(enemies));
+
+                addSection(container, 'Spells',
+                    ['Name', 'Source', 'Learning Price', 'Cast Price', 'Damage', 'Usable on Map'],
+                    buildSpellRows(spells));
+            }).catch(function(error) {
+                container.innerHTML = '';
+                var errorMessage = document.createElement('p');
+                errorMessage.className = 'loadError';
+                errorMessage.textContent = 'Failed to load stats: ' + error.message;
+                container.appendChild(errorMessage);
+            });
+        }
+
+        loadStats();
+    </script>
+</body>
+</html>
