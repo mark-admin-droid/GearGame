@@ -1,10 +1,11 @@
-const CACHE_NAME = 'gear-game-v1';
+const CACHE_NAME = 'gear-game-v2';
 const ASSETS_TO_CACHE = [
   './',
   'index.html',
   'items.json',
   'enemies.json',
   'hero.json',
+  'spells.json',
   'manifest.webmanifest',
   'images/favicon.ico',
   'images/favicon-16x16.png',

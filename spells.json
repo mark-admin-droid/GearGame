@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Fireball",
+    "learningPrice": 20,
+    "castPrice": 3,
+    "source": "fire",
+    "damage": 8,
+    "canBeUsedOnMap": false
+  },
+  {
+    "name": "Blizzard",
+    "learningPrice": 40,
+    "castPrice": 9,
+    "source": "ice",
+    "damage": 999,
+    "canBeUsedOnMap": true
+  }
+]

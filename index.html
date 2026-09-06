@@ -17,11 +17,13 @@
             margin: 0;
             color: #111;
             background: linear-gradient(180deg, #f2efe7 0%, #ece7da 100%);
+            height: 100vh;
+            overflow: hidden;
         }
 
         .screenCard {
             margin: 0;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #b8ad97;
             border-radius: 0;
             text-align: center;
@@ -29,8 +31,9 @@
             box-shadow: 0 8px 24px rgba(70, 54, 30, 0.12);
             width: 100%;
             max-width: none;
-            min-height: 100vh;
+            height: 100vh;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .startScreen,
@@ -95,6 +98,18 @@
             color: #fff;
             margin-top: 0;
             margin-bottom: 12px;
+        }
+
+        #monasteryButton {
+            background: #c76b49;
+            color: #fff7ef;
+            border-color: #9a4f34;
+        }
+
+        #castBlizzardButton {
+            background: #7ec8ff;
+            color: #083a5f;
+            border-color: #4aa7e6;
         }
 
         .container {
@@ -232,20 +247,21 @@
 
         .battleGrid {
             display: grid;
-            grid-template-columns: repeat(20, 28px);
+            grid-template-columns: repeat(20, clamp(18px, 2.65vh, 24px));
             gap: 2px;
             justify-content: center;
-            margin-top: 10px;
+            margin-top: 6px;
         }
 
         .battleCell {
-            width: 28px;
-            height: 28px;
+            width: clamp(18px, 2.65vh, 24px);
+            height: clamp(18px, 2.65vh, 24px);
             border: 1px solid #999;
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #f3f3f3;
+            font-size: 10px;
         }
 
         .battleCell.hero {
@@ -260,6 +276,18 @@
             background-color: #7aaaff;
             color: #003366;
             font-weight: bold;
+        }
+
+        .battleCell.monastery {
+            background-color: #c76b49;
+            color: #fff7ef;
+            font-weight: bold;
+        }
+
+        .battleCell.blizzardPreview {
+            background-color: #b87bff !important;
+            color: #fff !important;
+            box-shadow: inset 0 0 0 2px #6f2dc9;
         }
 
         .battleCell.druidHouse {
@@ -306,15 +334,15 @@
 
         .caveGrid {
             display: none;
-            grid-template-columns: repeat(8, 36px);
+            grid-template-columns: repeat(8, clamp(24px, 3.8vh, 32px));
             gap: 2px;
             justify-content: center;
-            margin-top: 10px;
+            margin-top: 6px;
         }
 
         .caveCell {
-            width: 36px;
-            height: 36px;
+            width: clamp(24px, 3.8vh, 32px);
+            height: clamp(24px, 3.8vh, 32px);
             border: 1px solid #3d3d3d;
             background: #4a4a4a;
             display: flex;
@@ -341,36 +369,11 @@
             gap: 8px;
         }
 
-        .leftLogsPanel {
-            width: 64px;
-            min-height: 598px;
-            border: 1px solid #b8ad97;
-            background: #efe5d2;
-            padding: 4px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            overflow-y: auto;
-        }
-
         .leftLogItem {
             height: 24px;
             border-radius: 2px;
             background-color: #6d4c41;
             color: #fff3e0;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .leftRockItem {
-            height: 24px;
-            border-radius: 2px;
-            background-color: #2f2f2f;
-            color: #e2e2e2;
             font-size: 10px;
             display: flex;
             align-items: center;
@@ -398,19 +401,6 @@
             justify-content: center;
             align-items: flex-start;
             gap: 8px;
-        }
-
-        .caveResourcePanel {
-            width: 72px;
-            min-height: 304px;
-            border: 1px solid #555;
-            background: #d3d3d3;
-            padding: 4px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            overflow-y: auto;
         }
 
         .moveButton {
@@ -474,6 +464,12 @@
             color: #111;
         }
 
+        #blowHornButton {
+            background: #f3e3be;
+            color: #4b3a20;
+            border: 1px solid #bda274;
+        }
+
         #freeHealButton {
             margin-top: 10px;
             padding: 6px 10px;
@@ -503,43 +499,57 @@
             padding-top: 8px;
             text-align: left;
             font-size: 12px;
-            max-height: 140px;
+            max-height: none;
             overflow-y: auto;
+            min-height: 0;
         }
 
         .adventureLayout {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
+            flex-direction: row;
+            gap: 8px;
+            margin-top: 6px;
+            min-height: 0;
+            flex: 1;
         }
 
         .adventureMain {
             min-width: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex: 1;
         }
 
         .adventureLog,
         .deathLog {
             margin-top: 0;
-            max-height: 55vh;
+            max-height: none;
         }
 
         .deathLayout {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             gap: 12px;
             margin-top: 12px;
             text-align: left;
+            min-height: 0;
+            flex: 1;
         }
 
         .deathMain {
             min-width: 0;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             .container {
                 flex-direction: column;
                 align-items: stretch;
+            }
+
+            .adventureLayout,
+            .deathLayout {
+                flex-direction: column;
             }
 
             .box {
@@ -547,32 +557,35 @@
             }
         }
 
-        @media (min-width: 1024px) {
-            .screenCard {
-                padding: 16px;
-            }
+        .adventureLog,
+        .deathLog {
+            width: min(30vw, 360px);
+            flex: 0 0 min(30vw, 360px);
+            border-top: 0;
+            border-left: 1px solid #ddd;
+            padding-top: 0;
+            padding-left: 8px;
+            height: 100%;
+        }
 
-            .adventureLayout,
-            .deathLayout {
-                flex-direction: row;
-                align-items: flex-start;
-            }
+        #battleScreen > .attackButton,
+        #battleScreen > .inventoryButton,
+        #battleScreen > .fleeButton,
+        #battleScreen > .gameButton {
+            margin-top: 6px;
+            padding: 6px 10px;
+            font-size: 13px;
+        }
 
-            .adventureMain,
-            .deathMain {
-                flex: 1;
-            }
+        #battleScreen {
+            display: none;
+            text-align: left;
+        }
 
-            .adventureLog,
-            .deathLog {
-                width: 320px;
-                flex: 0 0 320px;
-                border-top: 0;
-                border-left: 1px solid #ddd;
-                padding-top: 0;
-                padding-left: 10px;
-                max-height: 70vh;
-            }
+        #battleInfo,
+        #battleStats {
+            margin-bottom: 4px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -602,6 +615,7 @@
             <div class="box">
                 <h2>Inventory</h2>
                 <p>Gold: <span id="goldAmount" class="goldValue"></span></p>
+                <p>Mana: <span id="manaAmount"></span></p>
                 <div class="equipmentSection">
                     <h3>Equipped</h3>
                     <ul id="equipmentList"></ul>
@@ -626,26 +640,26 @@
         </div>
         <div id="battleStats" class="statBox"></div>
         <button id="attackButton" class="attackButton" onclick="heroAttack()" style="display:none;">Fight</button>
+        <button id="castFireballButton" class="attackButton" onclick="castFireball()" style="display:none;">Cast Fireball</button>
+        <button id="castBlizzardButton" class="attackButton" onclick="castBlizzard()" style="display:none;">Cast Blizzard</button>
         <button id="fleeButton" class="fleeButton" onclick="heroFlee()" style="display:none;">Flee</button>
         <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
         <button id="drinkPotionQuickButton" class="attackButton" onclick="drinkHealthPotionQuick()" style="display:none;">Drink Health potion</button>
         <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
         <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
+        <button id="monasteryButton" class="inventoryButton" onclick="enterMonastery()" style="display:none;">Enter Monastery</button>
         <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
         <button id="buildButton" class="inventoryButton" onclick="buildFromLogs()" style="display:none;" disabled>Build</button>
         <button id="stoneBuildButton" class="inventoryButton" onclick="buildFromRocks()" style="display:none;" disabled>Stone Build</button>
         <button id="caveButton" class="inventoryButton" onclick="toggleCave()" style="display:none;">Enter Cave</button>
         <button id="mineButton" class="inventoryButton" onclick="mineRock()" style="display:none;">Mine</button>
         <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
+        <button id="blowHornButton" class="inventoryButton" onclick="blowHorn()" style="display:none;">Blow Horn</button>
         <div class="adventureLayout">
             <div class="adventureMain">
-                <div class="mapWithLeftLogs">
-                    <div id="leftLogsPanel" class="leftLogsPanel"></div>
-                    <div id="battleGrid" class="battleGrid"></div>
-                </div>
+                <div id="battleGrid" class="battleGrid"></div>
                 <div id="caveViewLayout" class="caveViewLayout">
                     <div id="caveGrid" class="caveGrid"></div>
-                    <div id="caveResourcePanel" class="caveResourcePanel"></div>
                 </div>
             </div>
             <div id="eventLog" class="eventLog adventureLog"></div>
@@ -693,8 +707,17 @@
             baseDamage: 0,
             baseArmor: 0
         };
+        var heroManaCurrent = 20;
+        var heroManaMax = 30;
+        var heroStartingMana = 20;
+        var spellsCatalog = [];
+        var hasFireballSpell = false;
+        var hasBlizzardSpell = false;
+        var blizzardTargetingActive = false;
+        var blizzardPreviewCenter = null;
         var heroPos = { x: 0, y: 0 };
         var shopPos = { x: 0, y: 0 };
+        var monasteryPos = { x: mapSize - 1, y: 0 };
         var druidHouseCells = [];
         var treasureCells = [];
         var treeCells = [];
@@ -739,6 +762,10 @@
         var enemyMoveDelayMs = 500;
         var isFreshDataMode = false;
         var currentGameMode = 'normal';
+        var hornUsedThisGame = false;
+        var hornSummonInProgress = false;
+        var riderMarkers = [];
+        var caveRiderMarkers = [];
         var heroScaling = {
             baseLevel: 1,
             healthIncreasePerLevel: 1,
@@ -769,6 +796,50 @@
             'Visit druid house to heal.',
             'Buy armor to survive.'
         ];
+
+        function getSpellByName(spellName) {
+            if (!spellName || !Array.isArray(spellsCatalog)) {
+                return null;
+            }
+
+            for (var i = 0; i < spellsCatalog.length; i++) {
+                if (spellsCatalog[i] && spellsCatalog[i].name === spellName) {
+                    return spellsCatalog[i];
+                }
+            }
+
+            return null;
+        }
+
+        function isSpellLearned(spellName) {
+            if (spellName === 'Fireball') {
+                return hasFireballSpell;
+            }
+
+            if (spellName === 'Blizzard') {
+                return hasBlizzardSpell;
+            }
+
+            return false;
+        }
+
+        function setSpellLearned(spellName) {
+            if (spellName === 'Fireball') {
+                hasFireballSpell = true;
+            }
+
+            if (spellName === 'Blizzard') {
+                hasBlizzardSpell = true;
+            }
+        }
+
+        function getSpellCastPrice(spellName, fallbackValue) {
+            var spell = getSpellByName(spellName);
+            if (spell && typeof spell.castPrice === 'number' && spell.castPrice >= 0) {
+                return spell.castPrice;
+            }
+            return fallbackValue;
+        }
 
         function getRandomTipMessage() {
             if (!tipsMessages || tipsMessages.length === 0) {
@@ -1074,6 +1145,11 @@
             }
 
             gold = startingGold;
+            heroManaCurrent = heroStartingMana;
+            hasFireballSpell = false;
+            hasBlizzardSpell = false;
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
             inventory = [];
             horseCount = 0;
             updateHorseState();
@@ -1120,6 +1196,10 @@
             pendingShopEnemyCount = 0;
             isShopOpen = true;
             activeVendor = 'shop';
+            hornUsedThisGame = false;
+            hornSummonInProgress = false;
+            riderMarkers = [];
+            caveRiderMarkers = [];
 
             document.getElementById('warningMessage').textContent = '';
             document.getElementById('battleInfo').textContent = '';
@@ -1150,6 +1230,8 @@
             }
 
             addEvent(heroStats.name + ' has fallen in battle');
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
             gameOver = true;
             battleActive = false;
             currentEnemy = null;
@@ -1299,13 +1381,16 @@
             var healAmount = Math.max(1, Math.round(heroStats.healthPoints * 0.5));
             var oldHealth = heroStats.currentHealth;
             heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + healAmount);
+            var manaRestore = Math.max(1, Math.round(heroManaMax * 0.5));
+            var oldMana = heroManaCurrent;
+            heroManaCurrent = Math.min(heroManaMax, heroManaCurrent + manaRestore);
             druidHealDay = currentDay;
 
             if (warningMessage) {
                 warningMessage.textContent = '';
             }
 
-            addEvent('Druid grants free healing: +' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ').');
+            addEvent('Druid grants free healing: +' + (heroStats.currentHealth - oldHealth) + ' HP and +' + (heroManaCurrent - oldMana) + ' mana.');
             showInventory();
             showShop();
         }
@@ -1317,16 +1402,40 @@
             shopList.innerHTML = '';
 
             if (vendorHeading) {
-                vendorHeading.textContent = activeVendor === 'druid' ? 'Druid House' : 'Shop';
+                if (activeVendor === 'druid') {
+                    vendorHeading.textContent = 'Druid House';
+                } else if (activeVendor === 'monastery') {
+                    vendorHeading.textContent = 'Monastery';
+                } else {
+                    vendorHeading.textContent = 'Shop';
+                }
             }
 
-            var sourceItems = activeVendor === 'druid' ? druidItems : shopItems;
+            if (activeVendor === 'monastery') {
+                for (var spellIndex = 0; spellIndex < spellsCatalog.length; spellIndex++) {
+                    var spell = spellsCatalog[spellIndex];
+                    if (!spell || !spell.name) {
+                        continue;
+                    }
 
-            for (var i = 0; i < sourceItems.length; i++) {
-                var item = sourceItems[i];
-                var li = document.createElement('li');
-                li.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br><span class="itemStatsSmall">' + getItemStatsText(item) + '</span></span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
-                shopList.appendChild(li);
+                    var isLearned = isSpellLearned(spell.name);
+                    var learnPrice = typeof spell.learningPrice === 'number' ? spell.learningPrice : 0;
+                    var canLearn = !isLearned && gold >= learnPrice;
+                    var learnButtonText = isLearned ? 'Learned' : (canLearn ? 'Learn (' + learnPrice + 'g)' : 'Need ' + learnPrice + 'g');
+                    var spellLi = document.createElement('li');
+                    var usageText = spell.canBeUsedOnMap ? 'map and battles' : 'battles only';
+                    spellLi.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + spell.name + '</span> <span class="slotLabel">(spell)</span><br><span class="itemStatsSmall">Source: ' + spell.source + '. Damage: ' + spell.damage + '. Cast cost: ' + spell.castPrice + ' mana. Usable in: ' + usageText + '.</span></span><button onclick="learnSpell(\'' + spell.name + '\')"' + (canLearn ? '' : ' disabled') + '>' + learnButtonText + '</button>';
+                    shopList.appendChild(spellLi);
+                }
+            } else {
+                var sourceItems = activeVendor === 'druid' ? druidItems : shopItems;
+
+                for (var i = 0; i < sourceItems.length; i++) {
+                    var item = sourceItems[i];
+                    var li = document.createElement('li');
+                    li.innerHTML = '<span class="shopItemInfo"><span class="itemName">' + item.name + '</span> <span class="slotLabel">(' + item.slot + ')</span><br><span class="itemStatsSmall">' + getItemStatsText(item) + '</span></span><span class="price goldValue">' + item.price + '</span><button onclick="buyItem(' + i + ')">Buy</button>';
+                    shopList.appendChild(li);
+                }
             }
 
             if (freeHealButton) {
@@ -1473,6 +1582,10 @@
             }
 
             document.getElementById('goldAmount').textContent = gold;
+            var manaAmount = document.getElementById('manaAmount');
+            if (manaAmount) {
+                manaAmount.textContent = heroManaCurrent + '/' + heroManaMax;
+            }
         }
 
         function getRandomCell() {
@@ -1643,7 +1756,7 @@
 
             var requiredItems = [];
             for (var j = 0; j < items.length; j++) {
-                if (items[j] && !isConsumableItem(items[j]) && (items[j].name === 'Axe' || items[j].name === 'Pickaxe')) {
+                if (items[j] && !isConsumableItem(items[j]) && (items[j].name === 'Axe' || items[j].name === 'Pickaxe' || items[j].name === 'Horn')) {
                     requiredItems.push(items[j]);
                 }
             }
@@ -1709,6 +1822,23 @@
 
                 shopItems.push(candidates[Math.floor(Math.random() * candidates.length)]);
             }
+
+            var hasHorn = false;
+            for (var h = 0; h < shopItems.length; h++) {
+                if (shopItems[h] && shopItems[h].name === 'Horn') {
+                    hasHorn = true;
+                    break;
+                }
+            }
+
+            if (!hasHorn && shopItems.length > 0) {
+                for (var itemIndex = 0; itemIndex < allItems.length; itemIndex++) {
+                    if (allItems[itemIndex] && allItems[itemIndex].name === 'Horn') {
+                        shopItems[shopItems.length - 1] = allItems[itemIndex];
+                        break;
+                    }
+                }
+            }
         }
 
         function isCellBlockedForEnemyMovement(candidate, movingEnemy, allowHeroCell) {
@@ -1721,6 +1851,10 @@
             }
 
             if (candidate.x === shopPos.x && candidate.y === shopPos.y) {
+                return true;
+            }
+
+            if (candidate.x === monasteryPos.x && candidate.y === monasteryPos.y) {
                 return true;
             }
 
@@ -1772,8 +1906,18 @@
             return aliveCount;
         }
 
+        function getAliveCaveEnemyCount() {
+            var aliveCount = 0;
+            for (var i = 0; i < caveEnemies.length; i++) {
+                if (caveEnemies[i] && caveEnemies[i].alive) {
+                    aliveCount += 1;
+                }
+            }
+            return aliveCount;
+        }
+
         function spawnEnemyAtRandomPosition() {
-            var blockedCells = [heroPos, shopPos];
+            var blockedCells = [heroPos, shopPos, monasteryPos];
             for (var i = 0; i < druidHouseCells.length; i++) {
                 blockedCells.push(druidHouseCells[i]);
             }
@@ -1897,7 +2041,7 @@
             refreshShopForNewDay();
             maybeSpawnDailyTreasure();
             spawnEnemyWave(nextEnemyCount);
-            addRandomTrees(dailyTreeGrowth, [heroPos, shopPos].concat(druidHouseCells, treasureCells.map(function(t) { return t.pos; }), treeCells, woodBlockCells, caveCells, enemies.filter(function(enemy) { return enemy && enemy.alive; }).map(function(enemy) { return enemy.pos; })));
+            addRandomTrees(dailyTreeGrowth, [heroPos, shopPos, monasteryPos].concat(druidHouseCells, treasureCells.map(function(t) { return t.pos; }), treeCells, woodBlockCells, caveCells, enemies.filter(function(enemy) { return enemy && enemy.alive; }).map(function(enemy) { return enemy.pos; })));
             addEvent('Day ' + currentDay + ' begins. The battlefield grows fiercer. ' + survivalEnemyCount + ' enemies now roam the land, and new trees spread across the wilds.');
             updateAdventureTitle();
         }
@@ -2261,6 +2405,10 @@
             return false;
         }
 
+        function isMonasteryCell(pos) {
+            return !!pos && pos.x === monasteryPos.x && pos.y === monasteryPos.y;
+        }
+
         function isTreeCell(pos) {
             for (var i = 0; i < treeCells.length; i++) {
                 var tree = treeCells[i];
@@ -2340,88 +2488,142 @@
             return (equippedItems.mainHand && equippedItems.mainHand.name === 'Pickaxe') || (equippedItems.offHand && equippedItems.offHand.name === 'Pickaxe');
         }
 
+        function hasEquippedHorn() {
+            return (equippedItems.mainHand && equippedItems.mainHand.name === 'Horn') || (equippedItems.offHand && equippedItems.offHand.name === 'Horn');
+        }
+
+        function isRiderMarkerCell(pos) {
+            for (var i = 0; i < riderMarkers.length; i++) {
+                if (riderMarkers[i].x === pos.x && riderMarkers[i].y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function isCaveRiderMarkerCell(pos) {
+            for (var i = 0; i < caveRiderMarkers.length; i++) {
+                if (caveRiderMarkers[i].x === pos.x && caveRiderMarkers[i].y === pos.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function buildRiderMarkersFromEnemies(enemyList, isCaveMap) {
+            var markers = [];
+            var occupied = {};
+            var offsets = [
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 0, y: -1 },
+                { x: 0, y: 1 },
+                { x: 1, y: -1 },
+                { x: -1, y: -1 },
+                { x: 1, y: 1 },
+                { x: -1, y: 1 }
+            ];
+            var maxSize = isCaveMap ? caveSize : mapSize;
+
+            for (var i = 0; i < enemyList.length; i++) {
+                var enemy = enemyList[i];
+                if (!enemy || !enemy.alive || !enemy.pos) {
+                    continue;
+                }
+
+                for (var o = 0; o < offsets.length; o++) {
+                    var candidate = {
+                        x: enemy.pos.x + offsets[o].x,
+                        y: enemy.pos.y + offsets[o].y
+                    };
+
+                    if (candidate.x < 0 || candidate.y < 0 || candidate.x >= maxSize || candidate.y >= maxSize) {
+                        continue;
+                    }
+
+                    var key = candidate.x + '_' + candidate.y;
+                    if (occupied[key]) {
+                        continue;
+                    }
+
+                    occupied[key] = true;
+                    markers.push(candidate);
+                    break;
+                }
+            }
+
+            return markers;
+        }
+
+        function blowHorn() {
+            if (gameOver || hornUsedThisGame || hornSummonInProgress || !hasEquippedHorn()) {
+                return;
+            }
+
+            var totalAliveEnemies = getAliveEnemyCount() + getAliveCaveEnemyCount();
+            if (totalAliveEnemies === 0) {
+                addEvent('No enemies answer the horn call.');
+                renderBattle();
+                return;
+            }
+
+            if (enemyMoveTimeoutId) {
+                clearTimeout(enemyMoveTimeoutId);
+                enemyMoveTimeoutId = null;
+            }
+            enemyTurnPending = false;
+
+            hornUsedThisGame = true;
+            hornSummonInProgress = true;
+            battleActive = false;
+            currentEnemy = null;
+            enemyCurrentHealth = 0;
+            riderMarkers = buildRiderMarkersFromEnemies(enemies, false);
+            caveRiderMarkers = buildRiderMarkersFromEnemies(caveEnemies, true);
+            addEvent('The horn thunders across the land. Riders charge toward every enemy!');
+            showBattleActions(false);
+            renderBattle();
+
+            setTimeout(function() {
+                var vanquishedCount = 0;
+                for (var i = 0; i < enemies.length; i++) {
+                    if (enemies[i] && enemies[i].alive) {
+                        enemies[i].alive = false;
+                        vanquishedCount += 1;
+                    }
+                }
+
+                for (var j = 0; j < caveEnemies.length; j++) {
+                    if (caveEnemies[j] && caveEnemies[j].alive) {
+                        caveEnemies[j].alive = false;
+                        vanquishedCount += 1;
+                    }
+                }
+
+                battleActive = false;
+                currentEnemy = null;
+                enemyCurrentHealth = 0;
+                riderMarkers = [];
+                caveRiderMarkers = [];
+                hornSummonInProgress = false;
+                addEvent('The riders vanish after vanquishing ' + vanquishedCount + ' enemies.');
+                showBattleActions(false);
+                renderBattle();
+            }, 700);
+        }
+
         function spawnLogOnLeftSide() {
             logCells.push({ id: Date.now() + '_' + Math.floor(Math.random() * 100000) });
-            addEvent('A chopped log appears left of the map.');
+            addEvent('A chopped log is added to your resources.');
             return true;
         }
 
         function renderLeftLogs() {
-            var leftLogsPanel = document.getElementById('leftLogsPanel');
-            if (!leftLogsPanel) {
-                return;
-            }
-
-            leftLogsPanel.innerHTML = '';
-
-            var logsTitle = document.createElement('div');
-            logsTitle.className = 'resourceSectionTitle';
-            logsTitle.textContent = 'Logs';
-            leftLogsPanel.appendChild(logsTitle);
-
-            if (!logCells || logCells.length === 0) {
-                var empty = document.createElement('div');
-                empty.className = 'leftLogsEmpty';
-                empty.textContent = 'No logs';
-                leftLogsPanel.appendChild(empty);
-                return;
-            }
-
-            for (var i = 0; i < logCells.length; i++) {
-                var logItem = document.createElement('div');
-                logItem.className = 'leftLogItem';
-                logItem.textContent = 'LOG';
-                leftLogsPanel.appendChild(logItem);
-            }
-
-            var rocksTitle = document.createElement('div');
-            rocksTitle.className = 'resourceSectionTitle';
-            rocksTitle.textContent = 'Rocks';
-            leftLogsPanel.appendChild(rocksTitle);
-
-            if (!minedRockItems || minedRockItems.length === 0) {
-                var emptyRocks = document.createElement('div');
-                emptyRocks.className = 'leftLogsEmpty';
-                emptyRocks.textContent = 'No rocks';
-                leftLogsPanel.appendChild(emptyRocks);
-                return;
-            }
-
-            for (var r = 0; r < minedRockItems.length; r++) {
-                var rockItem = document.createElement('div');
-                rockItem.className = 'leftRockItem';
-                rockItem.textContent = 'ROCK';
-                leftLogsPanel.appendChild(rockItem);
-            }
+            return;
         }
 
         function renderCaveResources() {
-            var caveResourcePanel = document.getElementById('caveResourcePanel');
-            if (!caveResourcePanel) {
-                return;
-            }
-
-            caveResourcePanel.innerHTML = '';
-
-            var rocksTitle = document.createElement('div');
-            rocksTitle.className = 'resourceSectionTitle';
-            rocksTitle.textContent = 'Rocks';
-            caveResourcePanel.appendChild(rocksTitle);
-
-            if (!minedRockItems || minedRockItems.length === 0) {
-                var empty = document.createElement('div');
-                empty.className = 'leftLogsEmpty';
-                empty.textContent = 'No rocks';
-                caveResourcePanel.appendChild(empty);
-                return;
-            }
-
-            for (var i = 0; i < minedRockItems.length; i++) {
-                var rockItem = document.createElement('div');
-                rockItem.className = 'leftRockItem';
-                rockItem.textContent = 'ROCK';
-                caveResourcePanel.appendChild(rockItem);
-            }
+            return;
         }
 
         function generateCaveRocks() {
@@ -2614,6 +2816,11 @@
                         cell.textContent = 'S';
                         cell.style.background = '#8b1a1a';
                         cell.style.color = '#fff';
+                    } else if (isCaveRiderMarkerCell({ x: x, y: y })) {
+                        cell.textContent = 'R';
+                        cell.style.background = '#f3e3be';
+                        cell.style.color = '#4b3a20';
+                        cell.style.fontWeight = 'bold';
                     } else if (isCaveExitCell({ x: x, y: y })) {
                         cell.textContent = 'E';
                     } else if (isCaveRockCell({ x: x, y: y })) {
@@ -2775,19 +2982,22 @@
             var battleScreen = document.getElementById('battleScreen');
             var battleInfo = document.getElementById('battleInfo');
             var attackButton = document.getElementById('attackButton');
+            var castFireballButton = document.getElementById('castFireballButton');
+            var castBlizzardButton = document.getElementById('castBlizzardButton');
             var fleeButton = document.getElementById('fleeButton');
             var shopButton = document.getElementById('shopButton');
             var druidHouseButton = document.getElementById('druidHouseButton');
+            var monasteryButton = document.getElementById('monasteryButton');
             var chopTreeButton = document.getElementById('chopTreeButton');
             var buildButton = document.getElementById('buildButton');
             var caveButton = document.getElementById('caveButton');
             var mineButton = document.getElementById('mineButton');
             var treasureButton = document.getElementById('treasureButton');
             var drinkPotionQuickButton = document.getElementById('drinkPotionQuickButton');
-            var leftLogsPanel = document.getElementById('leftLogsPanel');
             var nearbyEnemy = getNearbyEnemy(heroPos);
             var onShop = isWithinOneCell(heroPos, shopPos);
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !gameOver;
+            var onMonastery = isWithinOneCell(heroPos, monasteryPos) && !gameOver;
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !gameOver;
             var onCave = !!getAdjacentCaveCell(heroPos) && !gameOver;
             var onTreasure = !!getNearbyTreasure(heroPos) && !gameOver;
@@ -2800,9 +3010,12 @@
             if (nearbyEnemy) {
                 attackButton.textContent = 'Fight';
             }
+            castFireballButton.style.display = battleActive && currentEnemy && hasFireballSpell && heroManaCurrent >= getSpellCastPrice('Fireball', 3) ? 'inline-block' : 'none';
+            castBlizzardButton.style.display = !battleActive && !inCave && hasBlizzardSpell && heroManaCurrent >= getSpellCastPrice('Blizzard', 9) && !blizzardTargetingActive && !!(getSpellByName('Blizzard') && getSpellByName('Blizzard').canBeUsedOnMap) ? 'inline-block' : 'none';
             fleeButton.style.display = 'none';
             shopButton.style.display = onShop ? 'inline-block' : 'none';
             druidHouseButton.style.display = onDruidHouse ? 'inline-block' : 'none';
+            monasteryButton.style.display = onMonastery ? 'inline-block' : 'none';
             chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
             buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
             buildButton.disabled = !logCells || logCells.length === 0;
@@ -2812,16 +3025,14 @@
             treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
             drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
 
-            if (leftLogsPanel) {
-                leftLogsPanel.style.display = 'flex';
-            }
-
             if (nearbyEnemy) {
                 battleInfo.textContent = 'Enemy is nearby!';
             } else if (onShop) {
                 battleInfo.textContent = 'You are at the shop. Enter to browse gear.';
             } else if (onDruidHouse) {
                 battleInfo.textContent = 'The druid house is right next to you. Enter to buy consumables.';
+            } else if (onMonastery) {
+                battleInfo.textContent = 'The monastery is here. Enter to learn a spell.';
             } else if (onTreeWithAxe) {
                 battleInfo.textContent = 'A tree is next to you. Use Chop Tree with your axe.';
             } else if (onCave) {
@@ -2934,10 +3145,26 @@
             if (!treasure) {
                 return;
             }
-            gold += treasure.gold;
-            goldAcquired += treasure.gold;
-            addEvent('Hero finds treasure and gains ' + treasure.gold + 'g (gold now ' + gold + ')');
+
+            var treasureGold = Math.max(0, typeof treasure.gold === 'number' ? treasure.gold : 0);
+            if (treasureGold > 0) {
+                gold += treasureGold;
+                goldAcquired += treasureGold;
+            }
+
+            var lootedItems = Array.isArray(treasure.items) ? treasure.items : [];
+            for (var i = 0; i < lootedItems.length; i++) {
+                var lootItem = lootedItems[i];
+                inventory.push({ name: lootItem.name, price: lootItem.price, slot: lootItem.slot, properties: lootItem.properties });
+                if (lootItem.name === 'Horse') {
+                    horseCount += 1;
+                    updateHorseState();
+                }
+            }
+
+            addEvent('Hero opens treasure and gains ' + treasureGold + 'g and ' + lootedItems.length + ' item(s).');
             treasureCells = treasureCells.filter(function(t) { return t !== treasure; });
+            showInventory();
             renderBattle();
         }
 
@@ -3106,6 +3333,106 @@
             fleeButton.style.display = show ? 'inline-block' : 'none';
         }
 
+        function createTreasureChestAt(pos, goldAmount, items) {
+            if (!pos) {
+                return;
+            }
+
+            var chest = getTreasureAt(pos);
+            if (!chest) {
+                chest = { pos: { x: pos.x, y: pos.y }, gold: 0, items: [] };
+                treasureCells.push(chest);
+            }
+
+            chest.gold += Math.max(0, typeof goldAmount === 'number' ? goldAmount : 0);
+            if (!Array.isArray(chest.items)) {
+                chest.items = [];
+            }
+
+            var lootItems = Array.isArray(items) ? items : [];
+            for (var i = 0; i < lootItems.length; i++) {
+                var item = lootItems[i];
+                if (item) {
+                    chest.items.push({ name: item.name, price: item.price, slot: item.slot, properties: item.properties });
+                }
+            }
+        }
+
+        function resolveMapSpellEnemyDefeat(enemy, enemyPos, spellName) {
+            if (!enemy || !enemy.alive) {
+                return;
+            }
+
+            var xpReward = Math.max(1, typeof enemy.level === 'number' ? enemy.level : 1);
+            var goldReward = Math.max(0, typeof enemy.dropsGold === 'number' ? enemy.dropsGold : 0);
+            var droppedItems = [];
+            if (enemy.equippedWeapon) {
+                droppedItems.push(enemy.equippedWeapon);
+            }
+            if (enemy.equippedArmor) {
+                droppedItems.push(enemy.equippedArmor);
+            }
+
+            gainHeroExperience(xpReward);
+            enemiesKilled += 1;
+            enemy.alive = false;
+
+            if (goldReward > 0 || droppedItems.length > 0) {
+                createTreasureChestAt(enemyPos, goldReward, droppedItems);
+                addEvent(getEnemyDisplayName(enemy) + ' is slain by ' + spellName + ' and leaves a treasure chest.');
+            } else {
+                addEvent(getEnemyDisplayName(enemy) + ' is slain by ' + spellName + '.');
+            }
+        }
+
+        function defeatCurrentEnemy() {
+            if (!currentEnemy) {
+                return;
+            }
+
+            addEvent(getEnemyDisplayName(currentEnemy) + ' is defeated!');
+
+            var xpReward = Math.max(1, typeof currentEnemy.level === 'number' ? currentEnemy.level : 1);
+            gainHeroExperience(xpReward);
+
+            var reward = typeof currentEnemy.dropsGold === 'number' ? currentEnemy.dropsGold : 0;
+
+            if (reward > 0) {
+                gold += reward;
+                goldAcquired += reward;
+                addEvent('Hero gains ' + reward + ' coins for defeating ' + getEnemyDisplayName(currentEnemy) + ' (gold ' + (gold - reward) + ' -> ' + gold + ')');
+            } else {
+                addEvent(getEnemyDisplayName(currentEnemy) + ' drops no coins.');
+            }
+
+            var droppedItems = [];
+            if (currentEnemy.equippedWeapon) {
+                droppedItems.push(currentEnemy.equippedWeapon);
+            }
+            if (currentEnemy.equippedArmor) {
+                droppedItems.push(currentEnemy.equippedArmor);
+            }
+
+            for (var d = 0; d < droppedItems.length; d++) {
+                var lootItem = droppedItems[d];
+                inventory.push({ name: lootItem.name, price: lootItem.price, slot: lootItem.slot, properties: lootItem.properties });
+                if (lootItem.name === 'Horse') {
+                    horseCount += 1;
+                    updateHorseState();
+                }
+                addEvent('Hero loots ' + lootItem.name + ' from ' + getEnemyDisplayName(currentEnemy) + ' and adds it to the inventory');
+            }
+
+            enemiesKilled += 1;
+            currentEnemy.alive = false;
+            battleActive = false;
+            currentEnemy = null;
+            enemyCurrentHealth = 0;
+            showBattleActions(false);
+            showInventory();
+            renderBattle();
+        }
+
         function enterShop() {
             if (gameOver) {
                 return;
@@ -3119,6 +3446,57 @@
                 addEvent('Hero enters the shop.');
                 showShopView('shop');
             }
+        }
+
+        function enterMonastery() {
+            if (gameOver || battleActive) {
+                return;
+            }
+
+            if (isWithinOneCell(heroPos, monasteryPos)) {
+                addEvent('Hero enters the monastery.');
+                showShopView('monastery');
+            }
+        }
+
+        function learnSpell(spellName) {
+            if (gameOver || activeVendor !== 'monastery') {
+                return;
+            }
+
+            var spell = getSpellByName(spellName);
+            if (!spell) {
+                addEvent('That spell is not available.');
+                showShop();
+                return;
+            }
+
+            if (isSpellLearned(spell.name)) {
+                addEvent('Hero already knows ' + spell.name + '.');
+                showShop();
+                return;
+            }
+
+            var learnPrice = typeof spell.learningPrice === 'number' ? spell.learningPrice : 0;
+            if (gold < learnPrice) {
+                addEvent('Hero needs ' + learnPrice + ' gold to learn ' + spell.name + '.');
+                showShop();
+                return;
+            }
+
+            gold -= learnPrice;
+            setSpellLearned(spell.name);
+            addEvent('Hero learns ' + spell.name + ' for ' + learnPrice + ' gold.');
+            showShop();
+            showInventory();
+        }
+
+        function learnFireballSpell() {
+            learnSpell('Fireball');
+        }
+
+        function learnBlizzardSpell() {
+            learnSpell('Blizzard');
         }
 
         function openTreasure() {
@@ -3156,47 +3534,7 @@
             addEvent('Hero attacks for ' + heroDamage + ' damage (' + getEnemyDisplayName(currentEnemy) + ' armor ' + enemyArmor + ' reduces ' + heroAttackPower + ' to ' + heroDamage + ', HP ' + oldEnemyHealth + ' -> ' + enemyCurrentHealth + ')');
 
             if (enemyCurrentHealth <= 0) {
-                addEvent(getEnemyDisplayName(currentEnemy) + ' is defeated!');
-
-                var xpReward = Math.max(1, typeof currentEnemy.level === 'number' ? currentEnemy.level : 1);
-                gainHeroExperience(xpReward);
-
-                var reward = typeof currentEnemy.dropsGold === 'number' ? currentEnemy.dropsGold : 0;
-
-                if (reward > 0) {
-                    gold += reward;
-                    goldAcquired += reward;
-                    addEvent('Hero gains ' + reward + ' coins for defeating ' + getEnemyDisplayName(currentEnemy) + ' (gold ' + (gold - reward) + ' -> ' + gold + ')');
-                } else {
-                    addEvent(getEnemyDisplayName(currentEnemy) + ' drops no coins.');
-                }
-
-                var droppedItems = [];
-                if (currentEnemy.equippedWeapon) {
-                    droppedItems.push(currentEnemy.equippedWeapon);
-                }
-                if (currentEnemy.equippedArmor) {
-                    droppedItems.push(currentEnemy.equippedArmor);
-                }
-
-                for (var d = 0; d < droppedItems.length; d++) {
-                    var lootItem = droppedItems[d];
-                    inventory.push({ name: lootItem.name, price: lootItem.price, slot: lootItem.slot, properties: lootItem.properties });
-                    if (lootItem.name === 'Horse') {
-                        horseCount += 1;
-                        updateHorseState();
-                    }
-                    addEvent('Hero loots ' + lootItem.name + ' from ' + getEnemyDisplayName(currentEnemy) + ' and adds it to the inventory');
-                }
-
-                enemiesKilled += 1;
-                currentEnemy.alive = false;
-                battleActive = false;
-                currentEnemy = null;
-                enemyCurrentHealth = 0;
-                showBattleActions(false);
-                showInventory();
-                renderBattle();
+                defeatCurrentEnemy();
                 return;
             }
 
@@ -3219,11 +3557,213 @@
             renderBattle();
         }
 
+        function castFireball() {
+            if (gameOver) {
+                return;
+            }
+
+            if (!battleActive) {
+                return;
+            }
+
+            if (!currentEnemy) {
+                return;
+            }
+
+            if (!hasFireballSpell) {
+                addEvent('Hero has not learned Fireball yet.');
+                renderBattle();
+                return;
+            }
+
+            var fireballCastPrice = getSpellCastPrice('Fireball', 3);
+            if (heroManaCurrent < fireballCastPrice) {
+                addEvent('Hero does not have enough mana to cast Fireball.');
+                renderBattle();
+                return;
+            }
+
+            heroManaCurrent = Math.max(0, heroManaCurrent - fireballCastPrice);
+
+            var heroAttackPower = getHeroDamage();
+            var enemyArmor = getEnemyArmor(currentEnemy);
+            var fireballSpell = getSpellByName('Fireball');
+            var fireballBonusDamage = fireballSpell && typeof fireballSpell.damage === 'number' ? Math.max(0, fireballSpell.damage) : 0;
+            var effectiveArmor = Math.max(0, enemyArmor - 3);
+            var fireballDamage = Math.max(0, heroAttackPower + fireballBonusDamage - effectiveArmor);
+            var oldEnemyHealth = enemyCurrentHealth;
+            enemyCurrentHealth = Math.max(0, enemyCurrentHealth - fireballDamage);
+            addEvent('Hero casts Fireball for ' + fireballDamage + ' damage (spell damage +' + fireballBonusDamage + ', ignores 3 armor, ' + getEnemyDisplayName(currentEnemy) + ' armor ' + enemyArmor + ' becomes ' + effectiveArmor + ', HP ' + oldEnemyHealth + ' -> ' + enemyCurrentHealth + ')');
+
+            if (enemyCurrentHealth <= 0) {
+                defeatCurrentEnemy();
+                return;
+            }
+
+            var enemyAttackPower = getEnemyDamage(currentEnemy);
+            var heroArmor = getHeroArmor();
+            var enemyDamage = Math.max(0, enemyAttackPower - heroArmor);
+            var oldHeroHealth = heroStats.currentHealth;
+            heroStats.currentHealth = Math.max(0, heroStats.currentHealth - enemyDamage);
+            if (enemyDamage === 0) {
+                addEvent(getEnemyDisplayName(currentEnemy) + ' attacks but ' + heroStats.name + "'s armor deflects all damage (HP " + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+            } else {
+                addEvent(getEnemyDisplayName(currentEnemy) + ' attacks for ' + enemyDamage + ' damage (' + heroStats.name + ' armor ' + heroArmor + ' reduces ' + enemyAttackPower + ' to ' + enemyDamage + ', HP ' + oldHeroHealth + ' -> ' + heroStats.currentHealth + ')');
+            }
+
+            if (heroStats.currentHealth <= 0) {
+                handleHeroDeath(currentEnemy);
+                return;
+            }
+
+            renderBattle();
+        }
+
+        function castBlizzard() {
+            if (gameOver) {
+                return;
+            }
+
+            if (battleActive) {
+                return;
+            }
+
+            if (inCave) {
+                addEvent('Blizzard can only target the surface map.');
+                renderBattle();
+                return;
+            }
+
+            if (!hasBlizzardSpell) {
+                addEvent('Hero has not learned Blizzard yet.');
+                renderBattle();
+                return;
+            }
+
+            var blizzardSpell = getSpellByName('Blizzard');
+            if (blizzardSpell && blizzardSpell.canBeUsedOnMap === false) {
+                addEvent('Blizzard cannot be cast on the map.');
+                renderBattle();
+                return;
+            }
+
+            var blizzardCastPrice = getSpellCastPrice('Blizzard', 9);
+            if (heroManaCurrent < blizzardCastPrice) {
+                addEvent('Hero does not have enough mana to cast Blizzard.');
+                renderBattle();
+                return;
+            }
+
+            blizzardTargetingActive = true;
+            blizzardPreviewCenter = { x: heroPos.x, y: heroPos.y };
+            addEvent('Blizzard targeting active. Double-click any tile to destroy that tile and all adjacent tiles.');
+            renderBattle();
+        }
+
+        function castBlizzardAt(targetX, targetY) {
+            if (!blizzardTargetingActive) {
+                return;
+            }
+
+            var blizzardCastPrice = getSpellCastPrice('Blizzard', 9);
+            if (heroManaCurrent < blizzardCastPrice) {
+                blizzardTargetingActive = false;
+                blizzardPreviewCenter = null;
+                addEvent('Hero does not have enough mana to cast Blizzard.');
+                renderBattle();
+                return;
+            }
+
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
+            heroManaCurrent = Math.max(0, heroManaCurrent - blizzardCastPrice);
+
+            var removedTrees = 0;
+            var removedWoodBlocks = 0;
+            var removedStoneBlocks = 0;
+            var removedTreasures = 0;
+            var defeatedEnemies = 0;
+            var currentEnemyDefeated = false;
+
+            for (var dx = -1; dx <= 1; dx++) {
+                for (var dy = -1; dy <= 1; dy++) {
+                    var x = targetX + dx;
+                    var y = targetY + dy;
+
+                    if (x < 0 || x >= mapSize || y < 0 || y >= mapSize) {
+                        continue;
+                    }
+
+                    if (heroPos.x === x && heroPos.y === y) {
+                        continue;
+                    }
+
+                    var beforeTrees = treeCells.length;
+                    treeCells = treeCells.filter(function(tree) {
+                        return !(tree.x === x && tree.y === y);
+                    });
+                    removedTrees += beforeTrees - treeCells.length;
+
+                    var beforeWoodBlocks = woodBlockCells.length;
+                    woodBlockCells = woodBlockCells.filter(function(block) {
+                        return !(block.x === x && block.y === y);
+                    });
+                    removedWoodBlocks += beforeWoodBlocks - woodBlockCells.length;
+
+                    var beforeStoneBlocks = stoneBlockCells.length;
+                    stoneBlockCells = stoneBlockCells.filter(function(block) {
+                        return !(block.x === x && block.y === y);
+                    });
+                    removedStoneBlocks += beforeStoneBlocks - stoneBlockCells.length;
+
+                    var beforeTreasures = treasureCells.length;
+                    treasureCells = treasureCells.filter(function(treasure) {
+                        return !(treasure && treasure.pos && treasure.pos.x === x && treasure.pos.y === y);
+                    });
+                    removedTreasures += beforeTreasures - treasureCells.length;
+
+                    for (var i = 0; i < enemies.length; i++) {
+                        var enemy = enemies[i];
+                        if (!enemy || !enemy.alive || !enemy.pos) {
+                            continue;
+                        }
+                        if (enemy.pos.x === x && enemy.pos.y === y) {
+                            resolveMapSpellEnemyDefeat(enemy, { x: x, y: y }, 'Blizzard');
+                            defeatedEnemies += 1;
+                            if (currentEnemy === enemy) {
+                                currentEnemyDefeated = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (currentEnemyDefeated) {
+                battleActive = false;
+                currentEnemy = null;
+                enemyCurrentHealth = 0;
+                showBattleActions(false);
+            }
+
+            addEvent('Hero casts Blizzard and spends ' + blizzardCastPrice + ' mana.');
+            addEvent('Blizzard destroys ' + removedTrees + ' trees, ' + removedWoodBlocks + ' wood blocks, ' + removedStoneBlocks + ' stone blocks, and ' + removedTreasures + ' treasures.');
+            if (defeatedEnemies > 0) {
+                addEvent('Blizzard defeats ' + defeatedEnemies + ' enemies in the blast radius.');
+            }
+
+            renderBattle();
+            if (!battleActive && !inCave && !gameOver) {
+                scheduleEnemyMoveAfterHeroTurn();
+            }
+        }
+
         function heroFlee() {
             if (gameOver || !battleActive) {
                 return;
             }
 
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
             addEvent('Hero flees from ' + getEnemyDisplayName(currentEnemy) + '!');
             battleActive = false;
             currentEnemy = null;
@@ -3233,7 +3773,7 @@
         }
 
         function moveHeroTo(x, y) {
-            if (gameOver || battleActive || enemyTurnPending) {
+            if (gameOver || battleActive || enemyTurnPending || blizzardTargetingActive) {
                 return;
             }
 
@@ -3302,6 +3842,8 @@
                 addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyOnTile));
             } else if (isSameCell(heroPos, shopPos)) {
                 addEvent('Turn ' + turnNumber + '. Hero reached the shop. Use Enter Shop to browse gear.');
+            } else if (isSameCell(heroPos, monasteryPos)) {
+                addEvent('Turn ' + turnNumber + '. Hero reached the monastery.');
             } else if (isDruidHouseCell(heroPos)) {
                 addEvent('Turn ' + turnNumber + '. Hero reached the druid house. Use Enter Druid House to browse consumables.');
             } else {
@@ -3355,12 +3897,10 @@
         function renderBattle() {
             var battleGrid = document.getElementById('battleGrid');
             var caveGrid = document.getElementById('caveGrid');
-            var mapWithLeftLogs = document.querySelector('.mapWithLeftLogs');
             var battleInfo = document.getElementById('battleInfo');
             var battleStats = document.getElementById('battleStats');
             var heroBattlePanel = document.getElementById('heroBattlePanel');
             var enemyBattlePanel = document.getElementById('enemyBattlePanel');
-            var leftLogsPanel = document.getElementById('leftLogsPanel');
             battleGrid.innerHTML = '';
 
             var nearbyEnemy = getNearbyEnemy(heroPos);
@@ -3371,6 +3911,23 @@
                 for (var x = 0; x < mapSize; x++) {
                     var cell = document.createElement('div');
                     cell.className = 'battleCell';
+                    var cellX = x;
+                    var cellY = y;
+
+                    if (blizzardTargetingActive && !inCave) {
+                        cell.style.cursor = 'crosshair';
+                        (function(targetX, targetY) {
+                            cell.addEventListener('mouseenter', function() {
+                                if (!blizzardPreviewCenter || blizzardPreviewCenter.x !== targetX || blizzardPreviewCenter.y !== targetY) {
+                                    blizzardPreviewCenter = { x: targetX, y: targetY };
+                                    renderBattle();
+                                }
+                            });
+                            cell.addEventListener('dblclick', function() {
+                                castBlizzardAt(targetX, targetY);
+                            });
+                        })(cellX, cellY);
+                    }
 
                     if (x === heroPos.x && y === heroPos.y) {
                         cell.textContent = 'H';
@@ -3378,6 +3935,9 @@
                                     } else if (x === shopPos.x && y === shopPos.y) {
                         cell.textContent = 'S';
                         cell.classList.add('shop');
+                    } else if (x === monasteryPos.x && y === monasteryPos.y) {
+                        cell.textContent = 'M';
+                        cell.classList.add('monastery');
                     } else if (isDruidHouseCell({ x: x, y: y })) {
                         cell.textContent = 'DH';
                         cell.classList.add('druidHouse');
@@ -3404,22 +3964,35 @@
                             cell.classList.add('enemy');
                             cell.style.backgroundColor = getEnemyMapColor(enemyAtCell.level);
                             cell.style.color = getEnemyMapTextColor(enemyAtCell.level);
+                        } else if (isRiderMarkerCell({ x: x, y: y })) {
+                            cell.textContent = 'R';
+                            cell.style.background = '#f3e3be';
+                            cell.style.color = '#4b3a20';
+                            cell.style.fontWeight = 'bold';
                         } else {
-                            var adjacent = getAdjacentCells(heroPos);
-                            var moved = false;
+                            if (blizzardTargetingActive && !inCave) {
+                                cell.textContent = '';
+                            } else {
+                                var adjacent = getAdjacentCells(heroPos);
+                                var moved = false;
 
-                            for (var i = 0; i < adjacent.length; i++) {
-                                if (adjacent[i].x === x && adjacent[i].y === y) {
-                                    cell.innerHTML = '<button class="moveButton" onclick="moveHeroTo(' + x + ', ' + y + ')">' + adjacent[i].arrow + '</button>';
-                                    moved = true;
-                                    break;
+                                for (var i = 0; i < adjacent.length; i++) {
+                                    if (adjacent[i].x === x && adjacent[i].y === y) {
+                                        cell.innerHTML = '<button class="moveButton" onclick="moveHeroTo(' + x + ', ' + y + ')">' + adjacent[i].arrow + '</button>';
+                                        moved = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!moved) {
+                                    cell.textContent = '';
                                 }
                             }
-
-                            if (!moved) {
-                                cell.textContent = '';
-                            }
                         }
+                    }
+
+                    if (blizzardTargetingActive && !inCave && blizzardPreviewCenter && Math.abs(cellX - blizzardPreviewCenter.x) <= 1 && Math.abs(cellY - blizzardPreviewCenter.y) <= 1) {
+                        cell.classList.add('blizzardPreview');
                     }
 
                     battleGrid.appendChild(cell);
@@ -3430,7 +4003,7 @@
             renderCaveGrid();
             renderCaveResources();
 
-            heroBattlePanel.innerHTML = '<strong>' + heroStats.name + '</strong><br>Level ' + heroLevel + '<br>Experience to the next level ' + getExperienceToNextLevel() + '<br>HP ' + heroStats.currentHealth + '/' + heroStats.healthPoints + '<br>Damage ' + getHeroDamage() + '<br>Armor ' + getHeroArmor();
+            heroBattlePanel.innerHTML = '<strong>' + heroStats.name + '</strong><br>Level ' + heroLevel + '<br>Experience to the next level ' + getExperienceToNextLevel() + '<br>HP ' + heroStats.currentHealth + '/' + heroStats.healthPoints + '<br>Mana ' + heroManaCurrent + '/' + heroManaMax + '<br>Logs ' + logCells.length + ' / Rocks ' + minedRockItems.length + '<br>Damage ' + getHeroDamage() + '<br>Armor ' + getHeroArmor();
 
             if (battleActive && currentEnemy) {
                 enemyBattlePanel.style.display = 'block';
@@ -3443,18 +4016,24 @@
             }
 
             var attackButton = document.getElementById('attackButton');
+            var castFireballButton = document.getElementById('castFireballButton');
+            var castBlizzardButton = document.getElementById('castBlizzardButton');
             var fleeButton = document.getElementById('fleeButton');
             var shopButton = document.getElementById('shopButton');
             var druidHouseButton = document.getElementById('druidHouseButton');
+            var monasteryButton = document.getElementById('monasteryButton');
             var chopTreeButton = document.getElementById('chopTreeButton');
             var buildButton = document.getElementById('buildButton');
             var stoneBuildButton = document.getElementById('stoneBuildButton');
             var caveButton = document.getElementById('caveButton');
             var mineButton = document.getElementById('mineButton');
             var treasureButton = document.getElementById('treasureButton');
+            var blowHornButton = document.getElementById('blowHornButton');
             var drinkPotionQuickButton = document.getElementById('drinkPotionQuickButton');
+            var canUseHornNow = hasEquippedHorn() && !hornUsedThisGame && !hornSummonInProgress && (getAliveEnemyCount() + getAliveCaveEnemyCount() > 0);
             var onShop = isWithinOneCell(heroPos, shopPos);
             var onDruidHouse = !!getAdjacentDruidHouseCell(heroPos) && !battleActive && !gameOver;
+            var onMonastery = isWithinOneCell(heroPos, monasteryPos) && !battleActive && !gameOver;
             var onTreeWithAxe = !!getAdjacentTreeCell(heroPos) && hasEquippedAxe() && !battleActive && !gameOver;
             var onCave = !!getAdjacentCaveCell(heroPos) && !battleActive && !gameOver;
             var onCaveRock = !!getAdjacentCaveRockCell(caveHeroPos) && hasEquippedPickaxe() && inCave && !battleActive && !gameOver;
@@ -3463,53 +4042,52 @@
             if (gameOver) {
                 battleInfo.textContent = '';
                 attackButton.style.display = 'none';
+                castFireballButton.style.display = 'none';
+                castBlizzardButton.style.display = 'none';
                 fleeButton.style.display = 'none';
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
+                monasteryButton.style.display = 'none';
                 chopTreeButton.style.display = 'none';
                 buildButton.style.display = 'none';
                 stoneBuildButton.style.display = 'none';
                 caveButton.style.display = 'none';
                 mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                blowHornButton.style.display = 'none';
                 drinkPotionQuickButton.style.display = 'none';
-                if (leftLogsPanel) {
-                    leftLogsPanel.style.display = 'none';
-                }
-                if (mapWithLeftLogs) {
-                    mapWithLeftLogs.style.display = 'flex';
-                }
                 if (caveGrid) {
                     caveGrid.style.display = 'none';
                 }
                 showBattleMap(false);
             } else if (battleActive) {
                 battleInfo.textContent = 'Battle begins!';
-                attackButton.style.display = 'inline-block';
+                attackButton.style.display = blizzardTargetingActive ? 'none' : 'inline-block';
                 attackButton.textContent = 'Attack';
+                castFireballButton.style.display = !blizzardTargetingActive && hasFireballSpell && heroManaCurrent >= getSpellCastPrice('Fireball', 3) ? 'inline-block' : 'none';
+                castBlizzardButton.style.display = 'none';
                 fleeButton.style.display = 'inline-block';
                 shopButton.style.display = 'none';
                 druidHouseButton.style.display = 'none';
+                monasteryButton.style.display = 'none';
                 chopTreeButton.style.display = 'none';
                 buildButton.style.display = 'none';
                 stoneBuildButton.style.display = 'none';
                 caveButton.style.display = 'none';
                 mineButton.style.display = 'none';
                 treasureButton.style.display = 'none';
+                blowHornButton.style.display = canUseHornNow ? 'inline-block' : 'none';
                 drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
-                if (leftLogsPanel) {
-                    leftLogsPanel.style.display = 'none';
-                }
-                if (mapWithLeftLogs) {
-                    mapWithLeftLogs.style.display = 'flex';
-                }
                 if (caveGrid) {
                     caveGrid.style.display = 'none';
                 }
                 showBattleMap(false);
             } else {
+                castFireballButton.style.display = 'none';
+                castBlizzardButton.style.display = !inCave && hasBlizzardSpell && heroManaCurrent >= getSpellCastPrice('Blizzard', 9) && !blizzardTargetingActive && !!(getSpellByName('Blizzard') && getSpellByName('Blizzard').canBeUsedOnMap) ? 'inline-block' : 'none';
                 shopButton.style.display = onShop ? 'inline-block' : 'none';
                 druidHouseButton.style.display = onDruidHouse ? 'inline-block' : 'none';
+                monasteryButton.style.display = onMonastery ? 'inline-block' : 'none';
                 chopTreeButton.style.display = onTreeWithAxe ? 'inline-block' : 'none';
                 buildButton.style.display = logCells && logCells.length > 0 ? 'inline-block' : 'none';
                 buildButton.disabled = !logCells || logCells.length === 0;
@@ -3519,24 +4097,16 @@
                 caveButton.textContent = inCave ? 'Leave Cave' : 'Enter Cave';
                 mineButton.style.display = onCaveRock ? 'inline-block' : 'none';
                 treasureButton.style.display = onTreasure ? 'inline-block' : 'none';
+                blowHornButton.style.display = canUseHornNow ? 'inline-block' : 'none';
                 drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
-                if (leftLogsPanel) {
-                    leftLogsPanel.style.display = 'flex';
-                }
 
                 if (inCave) {
-                    if (mapWithLeftLogs) {
-                        mapWithLeftLogs.style.display = 'none';
-                    }
                     if (caveGrid) {
                         caveGrid.style.display = 'grid';
                     }
                     var caveViewLayout = document.getElementById('caveViewLayout');
                     if (caveViewLayout) {
                         caveViewLayout.style.display = 'flex';
-                    }
-                    if (leftLogsPanel) {
-                        leftLogsPanel.style.display = 'none';
                     }
                     if (isCaveExitCell(caveHeroPos)) {
                         battleInfo.textContent = 'The hidden exit is beneath your feet. Use Leave Cave to escape.';
@@ -3551,21 +4121,21 @@
                     if (nearbyCaveEnemy) {
                         attackButton.textContent = 'Fight';
                     }
+                    castBlizzardButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     shopButton.style.display = 'none';
                     druidHouseButton.style.display = 'none';
+                    monasteryButton.style.display = 'none';
                     chopTreeButton.style.display = 'none';
                     buildButton.style.display = 'none';
                     stoneBuildButton.style.display = 'none';
                     treasureButton.style.display = 'none';
+                    blowHornButton.style.display = canUseHornNow ? 'inline-block' : 'none';
                     drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
                     showBattleMap(false);
                     return;
                 }
 
-                if (mapWithLeftLogs) {
-                    mapWithLeftLogs.style.display = 'flex';
-                }
                 if (caveGrid) {
                     caveGrid.style.display = 'none';
                 }
@@ -3574,7 +4144,12 @@
                     caveViewLayout.style.display = 'none';
                 }
 
-                if (nearbyEnemy) {
+                if (blizzardTargetingActive) {
+                    battleInfo.textContent = 'Blizzard targeting active. Double-click a tile to cast on a 3x3 area.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    showBattleMap(true);
+                } else if (nearbyEnemy) {
                     battleInfo.textContent = 'Enemy is nearby!';
                     attackButton.style.display = 'inline-block';
                     attackButton.textContent = 'Fight';
@@ -3587,6 +4162,11 @@
                     showBattleMap(true);
                 } else if (onDruidHouse) {
                     battleInfo.textContent = 'The druid house is right next to you. Enter to buy consumables.';
+                    attackButton.style.display = 'none';
+                    fleeButton.style.display = 'none';
+                    showBattleMap(true);
+                } else if (onMonastery) {
+                    battleInfo.textContent = 'The monastery is here. Enter to learn spells.';
                     attackButton.style.display = 'none';
                     fleeButton.style.display = 'none';
                     showBattleMap(true);
@@ -3620,10 +4200,20 @@
             var inventoryBox = mainView.querySelector('.container .box:last-child');
             var pageTitle = document.getElementById('pageTitle');
 
-            activeVendor = vendorType === 'druid' ? 'druid' : 'shop';
+            if (vendorType === 'druid' || vendorType === 'monastery') {
+                activeVendor = vendorType;
+            } else {
+                activeVendor = 'shop';
+            }
 
             if (pageTitle) {
-                pageTitle.textContent = activeVendor === 'druid' ? 'Druid House' : 'Gear Shop';
+                if (activeVendor === 'druid') {
+                    pageTitle.textContent = 'Druid House';
+                } else if (activeVendor === 'monastery') {
+                    pageTitle.textContent = 'Monastery';
+                } else {
+                    pageTitle.textContent = 'Gear Shop';
+                }
             }
 
             if (shopBox) {
@@ -3678,7 +4268,10 @@
                 var overnightHeal = Math.max(1, Math.round(heroStats.healthPoints * 0.1));
                 var oldHealth = heroStats.currentHealth;
                 heroStats.currentHealth = Math.min(heroStats.healthPoints, heroStats.currentHealth + overnightHeal);
-                addEvent('Hero stayed overnight in the shop and recovered ' + (heroStats.currentHealth - oldHealth) + ' HP (' + oldHealth + ' -> ' + heroStats.currentHealth + ')');
+                var overnightMana = Math.max(1, Math.round(heroManaMax * 0.1));
+                var oldMana = heroManaCurrent;
+                heroManaCurrent = Math.min(heroManaMax, heroManaCurrent + overnightMana);
+                addEvent('Hero stayed overnight in the shop and recovered ' + (heroStats.currentHealth - oldHealth) + ' HP and ' + (heroManaCurrent - oldMana) + ' mana.');
                 advanceSurvivalWave();
             }
             pendingShopSurvivalAdvance = false;
@@ -3690,6 +4283,8 @@
             document.getElementById('backToAdventureButton').style.display = 'none';
             isShopOpen = false;
             activeVendor = 'shop';
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
             renderBattle();
         }
 
@@ -3702,6 +4297,11 @@
             isShopOpen = false;
 
             heroStats.currentHealth = heroStats.healthPoints;
+            heroManaCurrent = heroStartingMana;
+            hasFireballSpell = false;
+            hasBlizzardSpell = false;
+            blizzardTargetingActive = false;
+            blizzardPreviewCenter = null;
             heroPos = getRandomCell();
             caveCells = getDailyCaveCells();
             inCave = false;
@@ -3710,6 +4310,10 @@
             caveExitDiscovered = false;
             caveGeneratedDay = 0;
             caveEnemies = [];
+            hornUsedThisGame = false;
+            hornSummonInProgress = false;
+            riderMarkers = [];
+            caveRiderMarkers = [];
             while (isCaveCell(heroPos)) {
                 heroPos = getRandomCell();
             }
@@ -3723,7 +4327,7 @@
             pendingShopEnemyCount = 0;
             activeVendor = 'shop';
             updateAdventureTitle();
-            var blockedCells = [heroPos].concat(caveCells);
+            var blockedCells = [heroPos, monasteryPos].concat(caveCells);
 
             spawnEnemyWave(survivalEnemyCount);
             for (var i = 0; i < enemies.length; i++) {
@@ -3833,6 +4437,7 @@
                 fetchJsonDynamic('items.json'),
                 fetchJsonDynamic('enemies.json'),
                 fetchJsonDynamic('hero.json'),
+                fetchJsonDynamic('spells.json'),
                 fetchJsonDynamic('tips.json').catch(function() {
                     return [];
                 })
@@ -3841,7 +4446,8 @@
                     var loadedItems = results[0] || [];
                     var allEnemies = results[1] || [];
                     var heroConfig = results[2] || {};
-                    var loadedTips = results[3] || [];
+                    var loadedSpells = results[3] || [];
+                    var loadedTips = results[4] || [];
 
                     if (!Array.isArray(loadedItems) || loadedItems.length === 0) {
                         throw new Error('items.json is empty or invalid.');
@@ -3851,6 +4457,30 @@
                     }
                     if (!heroConfig || typeof heroConfig !== 'object') {
                         throw new Error('hero.json is invalid.');
+                    }
+                    if (!Array.isArray(loadedSpells) || loadedSpells.length === 0) {
+                        throw new Error('spells.json is empty or invalid.');
+                    }
+                    for (var spellCheckIndex = 0; spellCheckIndex < loadedSpells.length; spellCheckIndex++) {
+                        var checkedSpell = loadedSpells[spellCheckIndex];
+                        if (!checkedSpell || typeof checkedSpell.name !== 'string' || checkedSpell.name.length === 0) {
+                            throw new Error('spells.json has an entry with missing name.');
+                        }
+                        if (typeof checkedSpell.learningPrice !== 'number' || checkedSpell.learningPrice < 0) {
+                            throw new Error('spells.json has invalid learningPrice for ' + checkedSpell.name + '.');
+                        }
+                        if (typeof checkedSpell.castPrice !== 'number' || checkedSpell.castPrice < 0) {
+                            throw new Error('spells.json has invalid castPrice for ' + checkedSpell.name + '.');
+                        }
+                        if (typeof checkedSpell.source !== 'string' || checkedSpell.source.length === 0) {
+                            throw new Error('spells.json has invalid source for ' + checkedSpell.name + '.');
+                        }
+                        if (typeof checkedSpell.damage !== 'number' || checkedSpell.damage < 0) {
+                            throw new Error('spells.json has invalid damage for ' + checkedSpell.name + '.');
+                        }
+                        if (typeof checkedSpell.canBeUsedOnMap !== 'boolean') {
+                            throw new Error('spells.json has invalid canBeUsedOnMap for ' + checkedSpell.name + '.');
+                        }
                     }
                     if (typeof heroConfig.name !== 'string' || heroConfig.name.length === 0) {
                         throw new Error('hero.json is missing a valid name.');
@@ -3872,6 +4502,7 @@
                     }
 
                     allItems = loadedItems;
+                    spellsCatalog = loadedSpells;
                     if (Array.isArray(loadedTips) && loadedTips.length > 0) {
                         var normalizedTips = loadedTips.filter(function(tip) {
                             return typeof tip === 'string' && tip.trim().length > 0;
@@ -3899,6 +4530,10 @@
                     heroScaling.healthIncreasePerLevel = typeof heroConfig.healthIncreasePerLevel === 'number' && heroConfig.healthIncreasePerLevel > 0 ? heroConfig.healthIncreasePerLevel : 1;
                     heroScaling.damageIncreasePerLevel = typeof heroConfig.damageIncreasePerLevel === 'number' && heroConfig.damageIncreasePerLevel > 0 ? heroConfig.damageIncreasePerLevel : 1;
                     heroScaling.armorIncreasePerLevel = typeof heroConfig.armorIncreasePerLevel === 'number' && heroConfig.armorIncreasePerLevel > 0 ? heroConfig.armorIncreasePerLevel : 1;
+                    heroManaMax = typeof heroConfig.manaPoints === 'number' && heroConfig.manaPoints > 0 ? Math.floor(heroConfig.manaPoints) : 30;
+                    heroStartingMana = typeof heroConfig.startingMana === 'number' && heroConfig.startingMana >= 0 ? Math.floor(heroConfig.startingMana) : 20;
+                    heroStartingMana = Math.min(heroManaMax, heroStartingMana);
+                    heroManaCurrent = heroStartingMana;
                     resetHeroProgress();
 
                     gold = startingGold;
@@ -3922,6 +4557,7 @@
                     allItems = [];
                     enemyTemplates = [];
                     shopItems = [];
+                    spellsCatalog = [];
 
                     var welcomeMessage = document.getElementById('welcomeMessage');
                     var welcomeTip = document.getElementById('welcomeTip');
@@ -3929,7 +4565,7 @@
 
                     setStartButtonsDisabled(true);
                     if (welcomeMessage) {
-                        welcomeMessage.textContent = 'Could not load game data. Check items.json, enemies.json and hero.json.';
+                        welcomeMessage.textContent = 'Could not load game data. Check items.json, enemies.json, hero.json and spells.json.';
                     }
                     if (welcomeTip) {
                         welcomeTip.textContent = '';
