@@ -6,9 +6,9 @@
   "healthIncreasePerLevel": 1.1,
   "damageIncreasePerLevel": 1.1,
   "armorIncreasePerLevel": 1.1,
+  "manaIncreasePerLevel": 1.1,
   "healthPoints": 30,
   "manaPoints": 30,
-  "startingMana": 20,
   "baseDamage": 3,
   "baseArmor": 0
 }

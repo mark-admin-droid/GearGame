@@ -214,7 +214,7 @@
         }
 
         .battlePanel {
-            flex: 1;
+            flex: 0 0 auto;
             border: 1px solid #ccc;
             padding: 8px;
             text-align: left;
@@ -247,15 +247,15 @@
 
         .battleGrid {
             display: grid;
-            grid-template-columns: repeat(20, clamp(18px, 2.65vh, 24px));
+            grid-template-columns: repeat(20, clamp(18px, calc(5vh - 6px), 44px));
             gap: 2px;
             justify-content: center;
             margin-top: 6px;
         }
 
         .battleCell {
-            width: clamp(18px, 2.65vh, 24px);
-            height: clamp(18px, 2.65vh, 24px);
+            width: clamp(18px, calc(5vh - 6px), 44px);
+            height: clamp(18px, calc(5vh - 6px), 44px);
             border: 1px solid #999;
             display: flex;
             align-items: center;
@@ -418,6 +418,7 @@
             background-color: red;
             color: white;
             border: none;
+            border-radius: 6px;
             cursor: pointer;
         }
 
@@ -426,6 +427,7 @@
             padding: 6px 10px;
             color: white;
             border: none;
+            border-radius: 6px;
             cursor: pointer;
         }
 
@@ -476,6 +478,7 @@
             background-color: red;
             color: white;
             border: none;
+            border-radius: 6px;
             cursor: pointer;
         }
 
@@ -485,6 +488,7 @@
             background-color: #d4b400;
             color: black;
             border: none;
+            border-radius: 6px;
             cursor: pointer;
         }
 
@@ -504,24 +508,106 @@
             min-height: 0;
         }
 
+        .battleEventLog {
+            flex: 1;
+            min-height: 0;
+            font-size: 11px;
+        }
+
         .adventureLayout {
             display: flex;
             flex-direction: row;
-            gap: 8px;
+            gap: 12px;
             margin-top: 6px;
             min-height: 0;
             flex: 1;
+            justify-content: center;
+        }
+
+        .adventureSide {
+            flex: 0 0 220px;
+            width: 220px;
+            min-width: 160px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            text-align: left;
+            min-height: 0;
+            overflow-y: auto;
         }
 
         .adventureMain {
             min-width: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
-            align-items: flex-start;
-            flex: 1;
+            align-items: center;
+            flex: 0 1 auto;
+            height: 100%;
+            box-sizing: border-box;
         }
 
-        .adventureLog,
+        .adventureMapFrame {
+            border: 3px solid transparent;
+            border-radius: 4px;
+            padding: 4px;
+            box-sizing: border-box;
+        }
+
+        .adventureMapFrame.inBattle {
+            border-color: #d62828;
+            box-shadow: 0 0 8px rgba(214, 40, 40, 0.5);
+        }
+
+        .actionButtonsColumn {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .actionButtonsColumn button {
+            margin-top: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .openLogButton {
+            background: #8a8a8a;
+            color: #fff;
+            margin-top: auto;
+        }
+
+        .logOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f9f6ee;
+            z-index: 50;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logOverlay .eventLog {
+            flex: 1;
+            overflow-y: auto;
+            border-top: 0;
+            padding-top: 0;
+            width: auto;
+        }
+
+        .backToAdventureLogButton {
+            background: #2e9e44;
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 12px;
+            align-self: flex-start;
+        }
+
         .deathLog {
             margin-top: 0;
             max-height: none;
@@ -547,9 +633,22 @@
                 align-items: stretch;
             }
 
-            .adventureLayout,
+            .adventureLayout {
+                flex-direction: column;
+                align-items: center;
+            }
+
             .deathLayout {
                 flex-direction: column;
+            }
+
+            .adventureSide {
+                width: 100%;
+                flex: 1 1 auto;
+            }
+
+            .adventureMain {
+                height: auto;
             }
 
             .box {
@@ -557,7 +656,6 @@
             }
         }
 
-        .adventureLog,
         .deathLog {
             width: min(30vw, 360px);
             flex: 0 0 min(30vw, 360px);
@@ -632,37 +730,48 @@
     </div>
 
     <div id="battleScreen" class="battleScreen screenCard">
-        <h2 id="adventureTitle">Adventure</h2>
-        <div id="battleInfo"></div>
-        <div id="battlePanels" class="battlePanels">
-            <div id="heroBattlePanel" class="battlePanel heroPanel"></div>
-            <div id="enemyBattlePanel" class="battlePanel enemyPanel"></div>
-        </div>
-        <div id="battleStats" class="statBox"></div>
-        <button id="attackButton" class="attackButton" onclick="heroAttack()" style="display:none;">Fight</button>
-        <button id="castFireballButton" class="attackButton" onclick="castFireball()" style="display:none;">Cast Fireball</button>
-        <button id="castBlizzardButton" class="attackButton" onclick="castBlizzard()" style="display:none;">Cast Blizzard</button>
-        <button id="fleeButton" class="fleeButton" onclick="heroFlee()" style="display:none;">Flee</button>
-        <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
-        <button id="drinkPotionQuickButton" class="attackButton" onclick="drinkHealthPotionQuick()" style="display:none;">Drink Health potion</button>
-        <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
-        <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
-        <button id="monasteryButton" class="inventoryButton" onclick="enterMonastery()" style="display:none;">Enter Monastery</button>
-        <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
-        <button id="buildButton" class="inventoryButton" onclick="buildFromLogs()" style="display:none;" disabled>Build</button>
-        <button id="stoneBuildButton" class="inventoryButton" onclick="buildFromRocks()" style="display:none;" disabled>Stone Build</button>
-        <button id="caveButton" class="inventoryButton" onclick="toggleCave()" style="display:none;">Enter Cave</button>
-        <button id="mineButton" class="inventoryButton" onclick="mineRock()" style="display:none;">Mine</button>
-        <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
-        <button id="blowHornButton" class="inventoryButton" onclick="blowHorn()" style="display:none;">Blow Horn</button>
+        <div id="battleStats" class="statBox" style="display:none;"></div>
         <div class="adventureLayout">
+            <div class="adventureSide adventureLeft">
+                <div id="heroBattlePanel" class="battlePanel heroPanel"></div>
+                <div class="actionButtonsColumn">
+                    <button id="attackButton" class="attackButton" onclick="heroAttack()" style="display:none;">Fight</button>
+                    <button id="castFireballButton" class="attackButton" onclick="castFireball()" style="display:none;">Cast Fireball</button>
+                    <button id="castBlizzardButton" class="attackButton" onclick="castBlizzard()" style="display:none;">Cast Blizzard</button>
+                    <button id="fleeButton" class="fleeButton" onclick="heroFlee()" style="display:none;">Flee</button>
+                    <button id="inventoryButton" class="inventoryButton" onclick="openInventory()">Open Inventory</button>
+                    <button id="drinkPotionQuickButton" class="attackButton" onclick="drinkHealthPotionQuick()" style="display:none;">Drink Health potion</button>
+                    <button id="shopButton" class="inventoryButton" onclick="enterShop()" style="display:none;">Enter Shop</button>
+                    <button id="druidHouseButton" class="inventoryButton" onclick="enterDruidHouse()" style="display:none;">Enter Druid House</button>
+                    <button id="monasteryButton" class="inventoryButton" onclick="enterMonastery()" style="display:none;">Enter Monastery</button>
+                    <button id="chopTreeButton" class="inventoryButton" onclick="chopTree()" style="display:none;">Chop Logs</button>
+                    <button id="buildButton" class="inventoryButton" onclick="buildFromLogs()" style="display:none;" disabled>Build</button>
+                    <button id="stoneBuildButton" class="inventoryButton" onclick="buildFromRocks()" style="display:none;" disabled>Stone Build</button>
+                    <button id="caveButton" class="inventoryButton" onclick="toggleCave()" style="display:none;">Enter Cave</button>
+                    <button id="mineButton" class="inventoryButton" onclick="mineRock()" style="display:none;">Mine</button>
+                    <button id="treasureButton" class="inventoryButton" onclick="openTreasure()" style="display:none;">Open Treasure</button>
+                    <button id="blowHornButton" class="inventoryButton" onclick="blowHorn()" style="display:none;">Blow Horn</button>
+                </div>
+                <button id="openLogButton" class="gameButton openLogButton" onclick="openLogOverlay()">View Log</button>
+            </div>
             <div class="adventureMain">
-                <div id="battleGrid" class="battleGrid"></div>
-                <div id="caveViewLayout" class="caveViewLayout">
-                    <div id="caveGrid" class="caveGrid"></div>
+                <div id="mapFrame" class="adventureMapFrame">
+                    <div id="battleGrid" class="battleGrid"></div>
+                    <div id="caveViewLayout" class="caveViewLayout">
+                        <div id="caveGrid" class="caveGrid"></div>
+                    </div>
                 </div>
             </div>
-            <div id="eventLog" class="eventLog adventureLog"></div>
+            <div class="adventureSide adventureRight">
+                <h2 id="adventureTitle">Adventure</h2>
+                <div id="battleInfo"></div>
+                <div id="enemyBattlePanel" class="battlePanel enemyPanel"></div>
+                <div id="battleEventLog" class="eventLog battleEventLog" style="display:none;"></div>
+            </div>
+        </div>
+        <div id="logOverlay" class="logOverlay" style="display:none;">
+            <button id="closeLogButton" class="gameButton backToAdventureLogButton" onclick="closeLogOverlay()">Back to Adventure</button>
+            <div id="eventLog" class="eventLog"></div>
         </div>
     </div>
 
@@ -709,7 +818,6 @@
         };
         var heroManaCurrent = 20;
         var heroManaMax = 30;
-        var heroStartingMana = 20;
         var spellsCatalog = [];
         var hasFireballSpell = false;
         var hasBlizzardSpell = false;
@@ -744,6 +852,7 @@
         var enemyCurrentHealth = 0;
         var turnNumber = 0;
         var eventLog = [];
+        var battleEventLog = [];
         var enemiesKilled = 0;
         var goldAcquired = 0;
         var currentDay = 1;
@@ -770,12 +879,14 @@
             baseLevel: 1,
             healthIncreasePerLevel: 1,
             damageIncreasePerLevel: 1,
-            armorIncreasePerLevel: 1
+            armorIncreasePerLevel: 1,
+            manaIncreasePerLevel: 1
         };
         var heroBaseStats = {
             healthPoints: 0,
             baseDamage: 0,
-            baseArmor: 0
+            baseArmor: 0,
+            manaPoints: 0
         };
         var lastKillingEnemy = null;
         var endGameMessages = [
@@ -1035,11 +1146,14 @@
             heroStats.healthPoints = getScaledStat(heroBaseStats.healthPoints, heroScaling.healthIncreasePerLevel, levelDelta, 1);
             heroStats.baseDamage = getScaledStat(heroBaseStats.baseDamage, heroScaling.damageIncreasePerLevel, levelDelta, 0);
             heroStats.baseArmor = getScaledStat(heroBaseStats.baseArmor, heroScaling.armorIncreasePerLevel, levelDelta, 0);
+            heroManaMax = getScaledStat(heroBaseStats.manaPoints, heroScaling.manaIncreasePerLevel, levelDelta, 1);
 
             if (healToFull) {
                 heroStats.currentHealth = heroStats.healthPoints;
+                heroManaCurrent = heroManaMax;
             } else {
                 heroStats.currentHealth = Math.min(heroStats.currentHealth, heroStats.healthPoints);
+                heroManaCurrent = Math.min(heroManaCurrent, heroManaMax);
             }
         }
 
@@ -1145,7 +1259,6 @@
             }
 
             gold = startingGold;
-            heroManaCurrent = heroStartingMana;
             hasFireballSpell = false;
             hasBlizzardSpell = false;
             blizzardTargetingActive = false;
@@ -1207,6 +1320,7 @@
             document.getElementById('eventLog').innerHTML = '';
             document.getElementById('deathLog').innerHTML = '';
             showBattleActions(false);
+            closeLogOverlay();
 
             shopItems = getRandomShopItems(allItems, shopItemTargetCount);
             druidItems = getDruidStockItems(allItems);
@@ -2182,6 +2296,7 @@
                     currentEnemy = enemy;
                     enemyCurrentHealth = enemy.healthPoints;
                     battleActive = true;
+                    battleEventLog = [];
                     addEvent('Turn ' + turnNumber + '. ' + enemy.name + ' reaches the hero first and strikes!');
 
                     var enemyDamage = Math.max(0, getEnemyDamage(currentEnemy) - getHeroArmor());
@@ -2304,6 +2419,7 @@
                     currentEnemy = enemy;
                     enemyCurrentHealth = enemy.healthPoints;
                     battleActive = true;
+                    battleEventLog = [];
                     addEvent('Turn ' + turnNumber + '. ' + enemy.name + ' reaches the hero first and strikes!');
 
                     var enemyDamage = Math.max(0, getEnemyDamage(currentEnemy) - getHeroArmor());
@@ -3237,6 +3353,25 @@
                 line.innerHTML = formatEventMessage(eventLog[i]);
                 eventLogBox.appendChild(line);
             }
+
+            if (battleActive) {
+                battleEventLog.unshift(message);
+                renderBattleEventLog();
+            }
+        }
+
+        function renderBattleEventLog() {
+            var battleEventLogBox = document.getElementById('battleEventLog');
+            if (!battleEventLogBox) {
+                return;
+            }
+
+            battleEventLogBox.innerHTML = '';
+            for (var i = 0; i < battleEventLog.length; i++) {
+                var line = document.createElement('div');
+                line.innerHTML = formatEventMessage(battleEventLog[i]);
+                battleEventLogBox.appendChild(line);
+            }
         }
 
         function getDirectionName(fromPos, toPos) {
@@ -3331,6 +3466,20 @@
             var fleeButton = document.getElementById('fleeButton');
             attackButton.style.display = show ? 'inline-block' : 'none';
             fleeButton.style.display = show ? 'inline-block' : 'none';
+        }
+
+        function openLogOverlay() {
+            var logOverlay = document.getElementById('logOverlay');
+            if (logOverlay) {
+                logOverlay.style.display = 'flex';
+            }
+        }
+
+        function closeLogOverlay() {
+            var logOverlay = document.getElementById('logOverlay');
+            if (logOverlay) {
+                logOverlay.style.display = 'none';
+            }
         }
 
         function createTreasureChestAt(pos, goldAmount, items) {
@@ -3839,6 +3988,7 @@
                 currentEnemy = enemyOnTile;
                 enemyCurrentHealth = enemyOnTile.healthPoints;
                 battleActive = true;
+                battleEventLog = [];
                 addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyOnTile));
             } else if (isSameCell(heroPos, shopPos)) {
                 addEvent('Turn ' + turnNumber + '. Hero reached the shop. Use Enter Shop to browse gear.');
@@ -3880,6 +4030,7 @@
             currentEnemy = enemyToBattle;
             enemyCurrentHealth = enemyToBattle.healthPoints;
             battleActive = true;
+            battleEventLog = [];
             addEvent('Turn ' + turnNumber + '. Clash has begun against ' + getEnemyDisplayName(enemyToBattle));
             showBattleActions(true);
             renderBattle();
@@ -4009,10 +4160,24 @@
                 enemyBattlePanel.style.display = 'block';
                 enemyBattlePanel.innerHTML = '<strong>' + getEnemyDisplayName(currentEnemy) + '</strong><br>HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints + '<br>Damage ' + getEnemyDamage(currentEnemy) + '<br>Armor ' + getEnemyArmor(currentEnemy);
                 battleStats.innerHTML = '<strong>Enemy:</strong> ' + getEnemyDisplayName(currentEnemy) + ' HP ' + enemyCurrentHealth + '/' + currentEnemy.healthPoints;
+                var battleEventLogBox = document.getElementById('battleEventLog');
+                if (battleEventLogBox) {
+                    battleEventLogBox.style.display = 'block';
+                }
+                renderBattleEventLog();
             } else {
                 enemyBattlePanel.style.display = 'none';
                 enemyBattlePanel.innerHTML = '';
                 battleStats.innerHTML = '';
+                var battleEventLogBox = document.getElementById('battleEventLog');
+                if (battleEventLogBox) {
+                    battleEventLogBox.style.display = 'none';
+                }
+            }
+
+            var mapFrame = document.getElementById('mapFrame');
+            if (mapFrame) {
+                mapFrame.classList.toggle('inBattle', !!(battleActive && currentEnemy));
             }
 
             var attackButton = document.getElementById('attackButton');
@@ -4078,10 +4243,17 @@
                 treasureButton.style.display = 'none';
                 blowHornButton.style.display = canUseHornNow ? 'inline-block' : 'none';
                 drinkPotionQuickButton.style.display = getFirstHealthPotionIndex() !== -1 ? 'inline-block' : 'none';
-                if (caveGrid) {
-                    caveGrid.style.display = 'none';
+                if (inCave) {
+                    if (caveGrid) {
+                        caveGrid.style.display = 'grid';
+                    }
+                    showBattleMap(false);
+                } else {
+                    if (caveGrid) {
+                        caveGrid.style.display = 'none';
+                    }
+                    showBattleMap(true);
                 }
-                showBattleMap(false);
             } else {
                 castFireballButton.style.display = 'none';
                 castBlizzardButton.style.display = !inCave && hasBlizzardSpell && heroManaCurrent >= getSpellCastPrice('Blizzard', 9) && !blizzardTargetingActive && !!(getSpellByName('Blizzard') && getSpellByName('Blizzard').canBeUsedOnMap) ? 'inline-block' : 'none';
@@ -4297,7 +4469,7 @@
             isShopOpen = false;
 
             heroStats.currentHealth = heroStats.healthPoints;
-            heroManaCurrent = heroStartingMana;
+            heroManaCurrent = heroManaMax;
             hasFireballSpell = false;
             hasBlizzardSpell = false;
             blizzardTargetingActive = false;
@@ -4530,10 +4702,8 @@
                     heroScaling.healthIncreasePerLevel = typeof heroConfig.healthIncreasePerLevel === 'number' && heroConfig.healthIncreasePerLevel > 0 ? heroConfig.healthIncreasePerLevel : 1;
                     heroScaling.damageIncreasePerLevel = typeof heroConfig.damageIncreasePerLevel === 'number' && heroConfig.damageIncreasePerLevel > 0 ? heroConfig.damageIncreasePerLevel : 1;
                     heroScaling.armorIncreasePerLevel = typeof heroConfig.armorIncreasePerLevel === 'number' && heroConfig.armorIncreasePerLevel > 0 ? heroConfig.armorIncreasePerLevel : 1;
-                    heroManaMax = typeof heroConfig.manaPoints === 'number' && heroConfig.manaPoints > 0 ? Math.floor(heroConfig.manaPoints) : 30;
-                    heroStartingMana = typeof heroConfig.startingMana === 'number' && heroConfig.startingMana >= 0 ? Math.floor(heroConfig.startingMana) : 20;
-                    heroStartingMana = Math.min(heroManaMax, heroStartingMana);
-                    heroManaCurrent = heroStartingMana;
+                    heroScaling.manaIncreasePerLevel = typeof heroConfig.manaIncreasePerLevel === 'number' && heroConfig.manaIncreasePerLevel > 0 ? heroConfig.manaIncreasePerLevel : 1;
+                    heroBaseStats.manaPoints = typeof heroConfig.manaPoints === 'number' && heroConfig.manaPoints > 0 ? Math.floor(heroConfig.manaPoints) : 30;
                     resetHeroProgress();
 
                     gold = startingGold;
